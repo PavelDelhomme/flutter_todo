@@ -13,7 +13,6 @@ class HomeView extends StatefulWidget {
   @override
   State<HomeView> createState() => _HomeViewState();
 }
-
 class _HomeViewState extends State<HomeView> {
   Box<Task> taskBox = Hive.box<Task>("tasks");
 
