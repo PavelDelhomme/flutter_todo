@@ -24,8 +24,6 @@ class TaskView extends StatefulWidget {
 }
 
 class _TaskViewState extends State<TaskView> {
-  var title;
-  var subtitle;
   DateTime? time;
   DateTime? date;
   DateTime? reminder;
@@ -35,8 +33,8 @@ class _TaskViewState extends State<TaskView> {
   void initState() {
     super.initState();
     if (widget.task != null) {
-      title = widget.task!.title;
-      subtitle = widget.task!.subtitle;
+      widget.taskControllerForTitle.text = widget.task!.title;
+      widget.taskControllerForSubtitle.text = widget.task!.subtitle;
       time = widget.task!.createdAtTime;
       date = widget.task!.createdAtDate;
       priorityLevel = widget.task!.priorityLevel;
@@ -57,26 +55,29 @@ class _TaskViewState extends State<TaskView> {
         widget.taskControllerForSubtitle.text.isNotEmpty) {
       try {
         if (widget.task != null) {
-          widget.task?.title = title ?? widget.task!.title;
-          widget.task?.subtitle = subtitle ?? widget.task!.subtitle;
+          widget.task?.title = widget.taskControllerForTitle.text;
+          widget.task?.subtitle = widget.taskControllerForSubtitle.text;
           widget.task?.createdAtTime = time ?? widget.task!.createdAtTime;
           widget.task?.createdAtDate = date ?? widget.task!.createdAtDate;
           widget.task?.priorityLevel = priorityLevel;
           widget.task?.reminder = reminder;  // Set the reminder field
           widget.task?.save();
+          if (reminder != null) {
+            scheduleNotification(widget.task!);
+          }
         } else {
           var task = Task.create(
-            title: title!,
-            createdAtTime: time!,
-            createdAtDate: date!,
-            subtitle: subtitle!,
+            title: widget.taskControllerForTitle.text,
+            createdAtTime: time ?? DateTime.now(),
+            createdAtDate: date ?? DateTime.now(),
+            subtitle: widget.taskControllerForSubtitle.text,
             priorityLevel: priorityLevel,
             reminder: reminder,  // Set the reminder field
           );
           taskBox.add(task);
-        }
-        if (reminder != null) {
-          scheduleNotification(widget.task!);
+          if (reminder != null) {
+            scheduleNotification(task);
+          }
         }
         Navigator.of(context).pop();
       } catch (error) {
@@ -154,6 +155,26 @@ class _TaskViewState extends State<TaskView> {
                     initialDate: date,
                     initialPriorityLevel: priorityLevel,
                     initialReminder: reminder,
+                    onTimeSelected: (selectedTime) {
+                      setState(() {
+                        time = selectedTime;
+                      });
+                    },
+                    onDateSelected: (selectedDate) {
+                      setState(() {
+                        date = selectedDate;
+                      });
+                    },
+                    onReminderSelected: (selectedReminder) {
+                      setState(() {
+                        reminder = selectedReminder;
+                      });
+                    },
+                    onPrioritySelected: (selectedPriority) {
+                      setState(() {
+                        priorityLevel = selectedPriority!;
+                      });
+                    },
                   ),
                   TaskBottomButtons(
                     isTaskAlreadyExist: isTaskAlreadyExistBool(),

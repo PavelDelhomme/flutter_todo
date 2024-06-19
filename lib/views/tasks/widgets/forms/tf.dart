@@ -15,6 +15,10 @@ class TaskForm extends StatefulWidget {
   final DateTime? initialDate;
   final String initialPriorityLevel;
   final DateTime? initialReminder;
+  final Function(DateTime) onTimeSelected;
+  final Function(DateTime) onDateSelected;
+  final Function(DateTime) onReminderSelected;
+  final Function(String?) onPrioritySelected;
 
   const TaskForm({
     Key? key,
@@ -24,6 +28,10 @@ class TaskForm extends StatefulWidget {
     this.initialDate,
     this.initialPriorityLevel = 'Neutre',
     this.initialReminder,
+    required this.onTimeSelected,
+    required this.onDateSelected,
+    required this.onReminderSelected,
+    required this.onPrioritySelected,
   }) : super(key: key);
 
   @override
@@ -76,29 +84,17 @@ class _TaskFormState extends State<TaskForm> {
           TaskFieldSubtitle(controller: widget.taskControllerForSubtitle),
           TaskFieldPriority(
             priorityLevel: priorityLevel,
-            onPrioritySelected: (String? selectedPriority) {
-              setState(() {
-                priorityLevel = selectedPriority!;
-              });
-            },
+            onPrioritySelected: widget.onPrioritySelected,
           ),
           TaskFieldTimePicker(
             time: time,
-            onTimeSelected: (selectedTime) {
-              setState(() {
-                time = selectedTime;
-              });
-            },
+            onTimeSelected: widget.onTimeSelected,
             showTimeAsDateTime: showTimeAsDateTime,
             showTime: showTime,
           ),
           TaskFieldDatePicker(
             date: date,
-            onDateSelected: (selectedDate) {
-              setState(() {
-                date = selectedDate;
-              });
-            },
+            onDateSelected: widget.onDateSelected,
             showDateAsDateTime: showDateAsDateTime,
             showDate: showDate,
           ),
@@ -109,11 +105,7 @@ class _TaskFormState extends State<TaskForm> {
                 showTitleActions: true,
                 minTime: DateTime.now(),
                 onChanged: (_) {},
-                onConfirm: (selectedReminder) {
-                  setState(() {
-                    reminder = selectedReminder;
-                  });
-                },
+                onConfirm: widget.onReminderSelected,
                 currentTime: showDateAsDateTime(reminder),
               );
             },
