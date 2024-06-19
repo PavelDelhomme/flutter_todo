@@ -74,6 +74,21 @@ class NotificationService {
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
+
+  Future<void> scheduleReminderNotification({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime reminderDate,
+}) async { await scheduleNotification(id: id, title: title, body: body, scheduledDate: reminderDate); }
+
+  Future<void> scheduleDeadlineNotification({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime deadlineDate,
+}) async { await scheduleNotification(id: id, title: title, body: body, scheduledDate: deadlineDate); }
+
 }
 
 final NotificationService notificationService = NotificationService();

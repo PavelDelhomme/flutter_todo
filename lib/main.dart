@@ -120,7 +120,7 @@ class _HomeViewState extends State<HomeView> {
               leading: const Icon(Icons.info),
               title: const Text('About'),
               onTap: () {
-                // Navigate to About Page
+                // todo Navigate to About Page
               },
             ),
           ],

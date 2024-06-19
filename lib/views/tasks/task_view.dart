@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:todo_firebase/views/notifications/notification_file.dart';
 import 'package:todo_firebase/views/tasks/components/task_app_bar.dart';
-import 'package:todo_firebase/views/tasks/widgets/buttons/task_bottom_buttons.dart';
 import 'package:todo_firebase/views/tasks/widgets/forms/tf.dart';
 import 'package:todo_firebase/models/task.dart';
 import 'package:todo_firebase/utils/custom_str.dart';
+
+import '../../services/notification_service.dart';
 
 class TaskView extends StatefulWidget {
   final TextEditingController taskControllerForTitle;
@@ -24,6 +25,8 @@ class TaskView extends StatefulWidget {
 }
 
 class _TaskViewState extends State<TaskView> {
+  var title;
+  var subtitle;
   DateTime? time;
   DateTime? date;
   DateTime? reminder;
@@ -42,9 +45,103 @@ class _TaskViewState extends State<TaskView> {
     }
   }
 
+  void _onTimeSelected(DateTime selectedTime) {
+    setState(() {
+      time = selectedTime;
+    });
+  }
+
+  void _onDateSelected(DateTime selectedDate) {
+    setState(() {
+      date = selectedDate;
+    });
+  }
+
+  void _onReminderSelected(DateTime selectedReminder) {
+    setState(() {
+      reminder = selectedReminder;
+    });
+  }
+
+  void _onPrioritySelected(String? selectedPriority) {
+    setState(() {
+      priorityLevel = selectedPriority!;
+    });
+  }
+
   /// Vérifie si une tâche existe déjà
   bool isTaskAlreadyExistBool() {
     return widget.task != null;
+  }
+
+  void _saveTask() {
+    final taskBox = Hive.box<Task>('tasks');
+
+    if (widget.taskControllerForTitle.text.isNotEmpty &&
+        widget.taskControllerForSubtitle.text.isNotEmpty) {
+      try {
+        if (widget.task != null) {
+          widget.task?.title = title ?? widget.task!.title;
+          widget.task?.subtitle = subtitle ?? widget.task!.subtitle;
+          widget.task?.createdAtTime = time ?? widget.task!.createdAtTime;
+          widget.task?.createdAtDate = date ?? widget.task!.createdAtDate;
+          widget.task?.priorityLevel = priorityLevel;
+          widget.task?.reminder = reminder;
+          widget.task?.save();
+        } else {
+          var task = Task.create(
+            title: title!,
+            createdAtTime: time!,
+            createdAtDate: date!,
+            subtitle: subtitle!,
+            priorityLevel: priorityLevel,
+            reminder: reminder,
+          );
+          taskBox.add(task);
+        }
+
+        if (reminder != null) {
+          notificationService.scheduleReminderNotification(
+            id: widget.task?.id.hashCode ?? DateTime.now().hashCode,
+            title: widget.taskControllerForTitle.text,
+            body: 'Reminder for ${widget.taskControllerForTitle.text}',
+            reminderDate: reminder!,
+          );
+        }
+
+        if (date != null) {
+          notificationService.scheduleDeadlineNotification(
+            id: widget.task?.id.hashCode ?? DateTime.now().hashCode,
+            title: widget.taskControllerForTitle.text,
+            body: 'The deadline for ${widget.taskControllerForTitle.text} is today.',
+            deadlineDate: date!,
+          );
+        }
+
+        Navigator.of(context).pop();
+      } catch (error) {
+        _showErrorDialog('Error', 'An error occurred while saving the task.');
+      }
+    } else {
+      _showErrorDialog('Oops', 'Please fill in all the fields.');
+    }
+  }
+
+  void _showErrorDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(onPressed: () {
+            Navigator.of(ctx).pop();
+          },
+          child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Met à jour une tâche existante ou en crée une nouvelle
@@ -155,32 +252,15 @@ class _TaskViewState extends State<TaskView> {
                     initialDate: date,
                     initialPriorityLevel: priorityLevel,
                     initialReminder: reminder,
-                    onTimeSelected: (selectedTime) {
-                      setState(() {
-                        time = selectedTime;
-                      });
-                    },
-                    onDateSelected: (selectedDate) {
-                      setState(() {
-                        date = selectedDate;
-                      });
-                    },
-                    onReminderSelected: (selectedReminder) {
-                      setState(() {
-                        reminder = selectedReminder;
-                      });
-                    },
-                    onPrioritySelected: (selectedPriority) {
-                      setState(() {
-                        priorityLevel = selectedPriority!;
-                      });
-                    },
+                    onTimeSelected: _onTimeSelected,
+                    onDateSelected: _onDateSelected,
+                    onReminderSelected: _onReminderSelected,
+                    onPrioritySelected: _onPrioritySelected,
                   ),
-                  TaskBottomButtons(
-                    isTaskAlreadyExist: isTaskAlreadyExistBool(),
-                    onDelete: deleteTask,
-                    onSave: isTaskAlreadyExistUpdateTask,
-                  ),
+                  ElevatedButton(
+                    onPressed: _saveTask,
+                    child: const Text("Save Task"),
+                  )
                 ],
               ),
             ),
