@@ -84,17 +84,32 @@ class _TaskFormState extends State<TaskForm> {
           TaskFieldSubtitle(controller: widget.taskControllerForSubtitle),
           TaskFieldPriority(
             priorityLevel: priorityLevel,
-            onPrioritySelected: widget.onPrioritySelected,
+            onPrioritySelected: (selectedPriority) {
+              setState(() {
+                priorityLevel = selectedPriority!;
+              });
+              widget.onPrioritySelected(selectedPriority);
+            },
           ),
           TaskFieldTimePicker(
             time: time,
-            onTimeSelected: widget.onTimeSelected,
+            onTimeSelected: (selectedTime) {
+              setState(() {
+                time = selectedTime;
+              });
+              widget.onTimeSelected(selectedTime);
+            },
             showTimeAsDateTime: showTimeAsDateTime,
             showTime: showTime,
           ),
           TaskFieldDatePicker(
             date: date,
-            onDateSelected: widget.onDateSelected,
+            onDateSelected: (selectedDate) {
+              setState(() {
+                date = selectedDate;
+              });
+              widget.onDateSelected(selectedDate);
+            },
             showDateAsDateTime: showDateAsDateTime,
             showDate: showDate,
           ),
@@ -105,7 +120,12 @@ class _TaskFormState extends State<TaskForm> {
                 showTitleActions: true,
                 minTime: DateTime.now(),
                 onChanged: (_) {},
-                onConfirm: widget.onReminderSelected,
+                onConfirm: (selectedReminder) {
+                  setState(() {
+                    reminder = selectedReminder;
+                  });
+                  widget.onReminderSelected(selectedReminder);
+                },
                 currentTime: showDateAsDateTime(reminder),
               );
             },

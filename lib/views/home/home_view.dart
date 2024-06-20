@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:todo_firebase/models/task.dart';
+import 'package:todo_firebase/services/task_service.dart';
 import 'package:todo_firebase/utils/custom_str.dart';
 import 'package:todo_firebase/views/tasks/task_view.dart';
 import 'package:todo_firebase/views/home/components/drawer_menu.dart';
@@ -19,8 +19,6 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  Box<Task> taskBox = Hive.box<Task>("tasks");
-
   void _navigateToAddTask() {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -36,14 +34,12 @@ class _HomeViewState extends State<HomeView> {
   }
 
   void _deleteTask(Task task) {
-    task.delete();
-    setState(() {});
+    taskService.deleteTask(task.id);
   }
 
   void _markTaskComplete(Task task) {
     task.isCompleted = !task.isCompleted;
-    task.save();
-    setState(() {});
+    taskService.updateTask(task);
   }
 
   void _testNotification() {
@@ -55,21 +51,27 @@ class _HomeViewState extends State<HomeView> {
     return Scaffold(
       appBar: HomeAppBar(onNotificationPressed: _testNotification),
       drawer: const DrawerMenu(),
-      body: ValueListenableBuilder(
-        valueListenable: taskBox.listenable(),
-        builder: (context, Box<Task> tasks, _) {
+      body: StreamBuilder<List<Task>>(
+        stream: taskService.getTasks(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          }
+          final tasks = snapshot.data ?? [];
           if (tasks.isEmpty) {
             return const Center(
-              child: Text(CustomStr.noTaskYet),
+              child: Text("Pas encore de tâches"),
             );
           }
-
           return ListView.builder(
             itemCount: tasks.length,
             itemBuilder: (context, index) {
-              final task = tasks.getAt(index);
+              final task = tasks[index];
               return TaskWidget(
-                task: task!,
+                task: task,
                 onDismissed: () => _deleteTask(task),
                 onMarkedComplete: () => _markTaskComplete(task),
               );

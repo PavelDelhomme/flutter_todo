@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive/hive.dart';
 import 'package:todo_firebase/views/tasks/components/task_app_bar.dart';
 import 'package:todo_firebase/models/task.dart';
 import 'package:todo_firebase/utils/custom_str.dart';
-
 import '../../services/notification_service.dart';
+import '../../services/task_service.dart';
 import 'forms/task_form.dart';
 
 class TaskView extends StatefulWidget {
@@ -69,8 +70,6 @@ class _TaskViewState extends State<TaskView> {
   }
 
   void _saveTask() {
-    final taskBox = Hive.box<Task>('tasks');
-
     if (widget.taskControllerForTitle.text.isNotEmpty &&
         widget.taskControllerForSubtitle.text.isNotEmpty) {
       try {
@@ -81,7 +80,8 @@ class _TaskViewState extends State<TaskView> {
           widget.task?.createdAtDate = date ?? widget.task!.createdAtDate;
           widget.task?.priorityLevel = priorityLevel;
           widget.task?.reminder = reminder;
-          widget.task?.save();
+          widget.task?.userId = FirebaseAuth.instance.currentUser!.uid;
+          taskService.updateTask(widget.task!);
         } else {
           var task = Task.create(
             title: widget.taskControllerForTitle.text,
@@ -90,8 +90,9 @@ class _TaskViewState extends State<TaskView> {
             subtitle: widget.taskControllerForSubtitle.text,
             priorityLevel: priorityLevel,
             reminder: reminder,
+            userId: FirebaseAuth.instance.currentUser!.uid,
           );
-          taskBox.add(task);
+          taskService.addTask(task);
         }
 
         if (reminder != null) {
