@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:todo_firebase/models/task.dart';
 import 'package:todo_firebase/utils/custom_colors.dart';
 import 'package:todo_firebase/views/tasks/widgets/task_detail_view.dart';
+import 'package:todo_firebase/views/tasks/widgets/task_title.dart';
+import 'package:todo_firebase/views/tasks/widgets/task_subtitle.dart';
+import 'package:todo_firebase/views/tasks/widgets/task_time_and_date.dart';
 
 class TaskWidget extends StatelessWidget {
   final Task task;
@@ -18,6 +21,7 @@ class TaskWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isExpired = task.createdAtDate.isBefore(DateTime.now());
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -40,7 +44,11 @@ class TaskWidget extends StatelessWidget {
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: task.isCompleted ? CustomColors.primaryColor.withOpacity(0.6) : Colors.white,
+            color: task.isCompleted
+                ? CustomColors.primaryColor.withOpacity(0.6)
+                : isExpired
+                  ? Colors.red.withOpacity(0.6)
+                  : Colors.white,
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
@@ -82,7 +90,7 @@ class TaskWidget extends StatelessWidget {
                 Text(
                   task.subtitle,
                   style: TextStyle(
-                    color: task.isCompleted ? CustomColors.primaryColor : const Color.fromARGB(255, 164, 164, 164),
+                    color: task.isCompleted ? CustomColors.primaryColor : const Color.fromRGBO(0, 0, 0, 1),
                     fontWeight: FontWeight.w300,
                     decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                   ),
@@ -96,11 +104,11 @@ class TaskWidget extends StatelessWidget {
                       children: [
                         Text(
                           DateFormat('hh:mm a').format(task.createdAtTime),
-                          style: TextStyle(fontSize: 14, color: task.isCompleted ? Colors.white : Colors.grey),
+                          style: TextStyle(fontSize: 14, color: task.isCompleted ? Colors.white : Colors.white60),
                         ),
                         Text(
                           DateFormat.yMMMEd().format(task.createdAtDate),
-                          style: TextStyle(fontSize: 12, color: task.isCompleted ? Colors.white : Colors.grey),
+                          style: TextStyle(fontSize: 12, color: task.isCompleted ? Colors.white : Colors.white70),
                         ),
                       ],
                     ),

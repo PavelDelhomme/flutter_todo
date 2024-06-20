@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_datetime_picker_bdaya/flutter_datetime_picker_bdaya.dart';
 import 'package:todo_firebase/utils/custom_str.dart';
-import 'fields/tf_datepicker.dart';
-import 'fields/tf_subtitle.dart';
-import 'fields/tf_time_picker.dart';
-import 'fields/tf_title.dart';
-import 'fields/tf_priority.dart';
+import 'tf_datepicker.dart';
+import 'tf_subtitle.dart';
+import 'tf_time_picker.dart';
+import 'tf_title.dart';
+import 'tf_priority.dart';
 
 class TaskForm extends StatefulWidget {
   final TextEditingController taskControllerForTitle;
@@ -47,8 +47,8 @@ class _TaskFormState extends State<TaskForm> {
   @override
   void initState() {
     super.initState();
-    time = widget.initialTime;
-    date = widget.initialDate;
+    time = widget.initialTime ?? DateTime.now().add(const Duration(hours: 1));
+    date = widget.initialDate ?? DateTime.now();
     reminder = widget.initialReminder;
     priorityLevel = widget.initialPriorityLevel;
   }

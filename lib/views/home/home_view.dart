@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
-//import 'package:hive_flutter/hive_flutter.dart';
 import 'package:todo_firebase/models/task.dart';
 import 'package:todo_firebase/utils/custom_str.dart';
 import 'package:todo_firebase/views/tasks/task_view.dart';
-import 'package:todo_firebase/views/settings/settings_view.dart'; // Import for settings view
-import 'widget/task_widget.dart';
+import 'package:todo_firebase/views/home/components/drawer_menu.dart';
+import 'package:todo_firebase/views/home/components/fab.dart';
+import 'package:todo_firebase/views/home/components/app_bar.dart';
+import 'package:todo_firebase/views/tasks/widgets/task_widget.dart';
+
+import '../../services/notification_service.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -42,55 +46,15 @@ class _HomeViewState extends State<HomeView> {
     setState(() {});
   }
 
+  void _testNotification() {
+    notificationService.showTestNotification();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(CustomStr.mainTitle),
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Text(
-                'Menu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Accueil'),
-              onTap: () {
-                Navigator.pop(context); // Close the drawer
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Paramètres'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsView()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.info),
-              title: const Text('About'),
-              onTap: () {
-                // Navigate to About Page
-              },
-            ),
-          ],
-        ),
-      ),
+      appBar: HomeAppBar(onNotificationPressed: _testNotification),
+      drawer: const DrawerMenu(),
       body: ValueListenableBuilder(
         valueListenable: taskBox.listenable(),
         builder: (context, Box<Task> tasks, _) {
@@ -113,10 +77,7 @@ class _HomeViewState extends State<HomeView> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToAddTask,
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: AddTaskFab(onPressed: _navigateToAddTask),
     );
   }
 }

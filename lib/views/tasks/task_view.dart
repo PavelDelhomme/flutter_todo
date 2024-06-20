@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:todo_firebase/views/notifications/notification_file.dart';
 import 'package:todo_firebase/views/tasks/components/task_app_bar.dart';
-import 'package:todo_firebase/views/tasks/widgets/forms/tf.dart';
 import 'package:todo_firebase/models/task.dart';
 import 'package:todo_firebase/utils/custom_str.dart';
 
 import '../../services/notification_service.dart';
+import 'forms/task_form.dart';
 
 class TaskView extends StatefulWidget {
   final TextEditingController taskControllerForTitle;
@@ -35,13 +34,13 @@ class _TaskViewState extends State<TaskView> {
   @override
   void initState() {
     super.initState();
+    time = widget.task?.createdAtTime ?? DateTime.now().add(const Duration(hours: 1));
+    date = widget.task?.createdAtDate ?? DateTime.now();
+    priorityLevel = widget.task?.priorityLevel ?? 'Neutre';
+    reminder = widget.task?.reminder;
     if (widget.task != null) {
       widget.taskControllerForTitle.text = widget.task!.title;
       widget.taskControllerForSubtitle.text = widget.task!.subtitle;
-      time = widget.task!.createdAtTime;
-      date = widget.task!.createdAtDate;
-      priorityLevel = widget.task!.priorityLevel;
-      reminder = widget.task!.reminder;
     }
   }
 
@@ -69,11 +68,6 @@ class _TaskViewState extends State<TaskView> {
     });
   }
 
-  /// Vérifie si une tâche existe déjà
-  bool isTaskAlreadyExistBool() {
-    return widget.task != null;
-  }
-
   void _saveTask() {
     final taskBox = Hive.box<Task>('tasks');
 
@@ -81,8 +75,8 @@ class _TaskViewState extends State<TaskView> {
         widget.taskControllerForSubtitle.text.isNotEmpty) {
       try {
         if (widget.task != null) {
-          widget.task?.title = title ?? widget.task!.title;
-          widget.task?.subtitle = subtitle ?? widget.task!.subtitle;
+          widget.task?.title = widget.taskControllerForTitle.text;
+          widget.task?.subtitle = widget.taskControllerForSubtitle.text;
           widget.task?.createdAtTime = time ?? widget.task!.createdAtTime;
           widget.task?.createdAtDate = date ?? widget.task!.createdAtDate;
           widget.task?.priorityLevel = priorityLevel;
@@ -90,10 +84,10 @@ class _TaskViewState extends State<TaskView> {
           widget.task?.save();
         } else {
           var task = Task.create(
-            title: title!,
-            createdAtTime: time!,
-            createdAtDate: date!,
-            subtitle: subtitle!,
+            title: widget.taskControllerForTitle.text,
+            createdAtTime: time ?? DateTime.now(),
+            createdAtDate: date ?? DateTime.now(),
+            subtitle: widget.taskControllerForSubtitle.text,
             priorityLevel: priorityLevel,
             reminder: reminder,
           );
@@ -104,7 +98,7 @@ class _TaskViewState extends State<TaskView> {
           notificationService.scheduleReminderNotification(
             id: widget.task?.id.hashCode ?? DateTime.now().hashCode,
             title: widget.taskControllerForTitle.text,
-            body: 'Reminder for ${widget.taskControllerForTitle.text}',
+            body: 'Rappel pour ${widget.taskControllerForTitle.text}',
             reminderDate: reminder!,
           );
         }
@@ -113,17 +107,17 @@ class _TaskViewState extends State<TaskView> {
           notificationService.scheduleDeadlineNotification(
             id: widget.task?.id.hashCode ?? DateTime.now().hashCode,
             title: widget.taskControllerForTitle.text,
-            body: 'The deadline for ${widget.taskControllerForTitle.text} is today.',
+            body: 'La date d\'échéance de ${widget.taskControllerForTitle.text} est aujourd\'hui.',
             deadlineDate: date!,
           );
         }
 
         Navigator.of(context).pop();
       } catch (error) {
-        _showErrorDialog('Error', 'An error occurred while saving the task.');
+        _showErrorDialog('Error', 'Une erreur est survenue pendant l\'enregistrement de la tâche.');
       }
     } else {
-      _showErrorDialog('Oops', 'Please fill in all the fields.');
+      _showErrorDialog('Oops', 'Veuillez remplir tout les champs.');
     }
   }
 
@@ -137,86 +131,7 @@ class _TaskViewState extends State<TaskView> {
           TextButton(onPressed: () {
             Navigator.of(ctx).pop();
           },
-          child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Met à jour une tâche existante ou en crée une nouvelle
-  void isTaskAlreadyExistUpdateTask() {
-    final taskBox = Hive.box<Task>('tasks');
-
-    if (widget.taskControllerForTitle.text.isNotEmpty &&
-        widget.taskControllerForSubtitle.text.isNotEmpty) {
-      try {
-        if (widget.task != null) {
-          widget.task?.title = widget.taskControllerForTitle.text;
-          widget.task?.subtitle = widget.taskControllerForSubtitle.text;
-          widget.task?.createdAtTime = time ?? widget.task!.createdAtTime;
-          widget.task?.createdAtDate = date ?? widget.task!.createdAtDate;
-          widget.task?.priorityLevel = priorityLevel;
-          widget.task?.reminder = reminder;  // Set the reminder field
-          widget.task?.save();
-          if (reminder != null) {
-            scheduleNotification(widget.task!);
-          }
-        } else {
-          var task = Task.create(
-            title: widget.taskControllerForTitle.text,
-            createdAtTime: time ?? DateTime.now(),
-            createdAtDate: date ?? DateTime.now(),
-            subtitle: widget.taskControllerForSubtitle.text,
-            priorityLevel: priorityLevel,
-            reminder: reminder,  // Set the reminder field
-          );
-          taskBox.add(task);
-          if (reminder != null) {
-            scheduleNotification(task);
-          }
-        }
-        Navigator.of(context).pop();
-      } catch (error) {
-        nothingEnterOnUpdateTaskMode(context);
-      }
-    } else {
-      emptyFieldsWarning(context);
-    }
-  }
-
-  /// Affiche un avertissement si les champs sont vides
-  void emptyFieldsWarning(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(CustomStr.oopsMsg),
-        content: const Text("Please fill in all the fields"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-            },
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Affiche un avertissement si rien n'est entré en mode mise à jour
-  void nothingEnterOnUpdateTaskMode(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text(CustomStr.oopsMsg),
-        content: const Text("Nothing entered to update"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-            },
-            child: const Text("OK"),
+            child: const Text('OK'),
           ),
         ],
       ),
@@ -235,7 +150,7 @@ class _TaskViewState extends State<TaskView> {
       onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
       child: Scaffold(
         backgroundColor: Colors.white,
-        appBar: TaskAppBar(isTaskAlreadyExist: isTaskAlreadyExistBool()),
+        appBar: TaskAppBar(isTaskAlreadyExist: widget.task != null),
         body: SizedBox(
           width: double.infinity,
           height: double.infinity,
@@ -259,7 +174,7 @@ class _TaskViewState extends State<TaskView> {
                   ),
                   ElevatedButton(
                     onPressed: _saveTask,
-                    child: const Text("Save Task"),
+                    child: const Text("Sauvegarder"),
                   )
                 ],
               ),

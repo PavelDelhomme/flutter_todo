@@ -36,7 +36,7 @@ class _TaskDetailViewState extends State<TaskDetailView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Task Details'),
+        title: Text('Détails de ${task.title}'),
       ),
       body: FutureBuilder(
         future: _refreshTask(),
@@ -82,7 +82,7 @@ class _TaskDetailViewState extends State<TaskDetailView> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    task.isCompleted ? 'Status: Completed' : 'Status: Incomplete',
+                    task.isCompleted ? 'Status: Complète' : 'Status: Incomplète',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
