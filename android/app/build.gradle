@@ -1,7 +1,7 @@
 plugins {
     id "com.android.application"
+    id 'com.google.gms.google-services' // FlutterFire Configuration
     id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
 }
 
@@ -25,8 +25,11 @@ if (flutterVersionName == null) {
 
 android {
     namespace = "com.delhomme.todo_firebase"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    //compileSdk = flutter.compileSdkVersion
+    compileSdk = 34
+    //ndkVersion = flutter.ndkVersion
+    ndkVersion = "21.4.7075529"
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -38,10 +41,14 @@ android {
         applicationId = "com.delhomme.todo_firebase"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        //minSdk = flutter.minSdkVersion
+        minSdkVersion 23
+        //targetSdk = flutter.targetSdkVersion
+        targetSdkVersion 34
+        //versionCode = flutterVersionCode.toInteger()
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
+        //versionName = "1.0"
     }
 
     buildTypes {

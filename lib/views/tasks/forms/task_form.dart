@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_datetime_picker_bdaya/flutter_datetime_picker_bdaya.dart';
 import 'package:todo_firebase/utils/custom_str.dart';
-import 'fields/tf_datepicker.dart';
-import 'fields/tf_subtitle.dart';
-import 'fields/tf_time_picker.dart';
-import 'fields/tf_title.dart';
-import 'fields/tf_priority.dart';
+import 'tf_datepicker.dart';
+import 'tf_subtitle.dart';
+import 'tf_time_picker.dart';
+import 'tf_title.dart';
+import 'tf_priority.dart';
 
 class TaskForm extends StatefulWidget {
   final TextEditingController taskControllerForTitle;
@@ -15,6 +15,10 @@ class TaskForm extends StatefulWidget {
   final DateTime? initialDate;
   final String initialPriorityLevel;
   final DateTime? initialReminder;
+  final Function(DateTime) onTimeSelected;
+  final Function(DateTime) onDateSelected;
+  final Function(DateTime) onReminderSelected;
+  final Function(String?) onPrioritySelected;
 
   const TaskForm({
     Key? key,
@@ -24,6 +28,10 @@ class TaskForm extends StatefulWidget {
     this.initialDate,
     this.initialPriorityLevel = 'Neutre',
     this.initialReminder,
+    required this.onTimeSelected,
+    required this.onDateSelected,
+    required this.onReminderSelected,
+    required this.onPrioritySelected,
   }) : super(key: key);
 
   @override
@@ -39,8 +47,8 @@ class _TaskFormState extends State<TaskForm> {
   @override
   void initState() {
     super.initState();
-    time = widget.initialTime;
-    date = widget.initialDate;
+    time = widget.initialTime ?? DateTime.now().add(const Duration(hours: 1));
+    date = widget.initialDate ?? DateTime.now();
     reminder = widget.initialReminder;
     priorityLevel = widget.initialPriorityLevel;
   }
@@ -76,10 +84,11 @@ class _TaskFormState extends State<TaskForm> {
           TaskFieldSubtitle(controller: widget.taskControllerForSubtitle),
           TaskFieldPriority(
             priorityLevel: priorityLevel,
-            onPrioritySelected: (String? selectedPriority) {
+            onPrioritySelected: (selectedPriority) {
               setState(() {
                 priorityLevel = selectedPriority!;
               });
+              widget.onPrioritySelected(selectedPriority);
             },
           ),
           TaskFieldTimePicker(
@@ -88,6 +97,7 @@ class _TaskFormState extends State<TaskForm> {
               setState(() {
                 time = selectedTime;
               });
+              widget.onTimeSelected(selectedTime);
             },
             showTimeAsDateTime: showTimeAsDateTime,
             showTime: showTime,
@@ -98,6 +108,7 @@ class _TaskFormState extends State<TaskForm> {
               setState(() {
                 date = selectedDate;
               });
+              widget.onDateSelected(selectedDate);
             },
             showDateAsDateTime: showDateAsDateTime,
             showDate: showDate,
@@ -113,6 +124,7 @@ class _TaskFormState extends State<TaskForm> {
                   setState(() {
                     reminder = selectedReminder;
                   });
+                  widget.onReminderSelected(selectedReminder);
                 },
                 currentTime: showDateAsDateTime(reminder),
               );

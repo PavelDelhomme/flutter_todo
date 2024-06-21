@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "772460167155",
+    "project_id": "todotest-ef108",
+    "storage_bucket": "todotest-ef108.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:772460167155:android:38a884fb8f346ad7f51c86",
+        "android_client_info": {
+          "package_name": "com.delhomme.todo_firebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOyEXi1MpNIQajB5fpxqcJJq9Y7QIuBuY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

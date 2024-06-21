@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
@@ -24,10 +25,13 @@ class Task extends HiveObject {
   DateTime createdAtTime;
 
   @HiveField(6)
-  String priorityLevel;  // New field
+  String priorityLevel;
 
   @HiveField(7)
-  DateTime? reminder;  // New field for reminder
+  DateTime? reminder;
+
+  @HiveField(8)
+  String userId;
 
   Task({
     String? id,
@@ -36,8 +40,9 @@ class Task extends HiveObject {
     this.isCompleted = false,
     DateTime? createdAtDate,
     DateTime? createdAtTime,
-    this.priorityLevel = 'Neutre',  // Initialize the new field
-    this.reminder,  // Initialize the new field
+    this.priorityLevel = 'Neutre',
+    this.reminder,
+    required this.userId,
   })  : id = id ?? const Uuid().v4(),
         createdAtDate = createdAtDate ?? DateTime.now(),
         createdAtTime = createdAtTime ?? DateTime.now();
@@ -47,8 +52,9 @@ class Task extends HiveObject {
     required String subtitle,
     DateTime? createdAtDate,
     DateTime? createdAtTime,
-    String priorityLevel = 'Neutre',  // Add the new field to the create method
-    DateTime? reminder,  // Add the new field to the create method
+    String priorityLevel = 'Neutre',
+    DateTime? reminder,
+    required String userId,
   }) {
     return Task(
       title: title,
@@ -57,6 +63,7 @@ class Task extends HiveObject {
       createdAtTime: createdAtTime,
       priorityLevel: priorityLevel,
       reminder: reminder,
+      userId: userId,
     );
   }
 
@@ -66,5 +73,33 @@ class Task extends HiveObject {
 
   void deleteTask() {
     delete();
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'subtitle': subtitle,
+      'isCompleted': isCompleted,
+      'createdAtDate': createdAtDate,
+      'createdAtTime': createdAtTime,
+      'priorityLevel': priorityLevel,
+      'reminder': reminder,
+      'userId': userId,
+    };
+  }
+
+  static Task fromMap(Map<String, dynamic> map) {
+    return Task(
+      id: map['id'],
+      title: map['title'],
+      subtitle: map['subtitle'],
+      isCompleted: map['isCompleted'],
+      createdAtDate: (map['createdAtDate'] as Timestamp).toDate(),
+      createdAtTime: (map['createdAtTime'] as Timestamp).toDate(),
+      priorityLevel: map['priorityLevel'],
+      reminder: map['reminder'] != null ? (map['reminder'] as Timestamp).toDate() : null,
+      userId: map['userId'],
+    );
   }
 }
