@@ -13,17 +13,19 @@ class _SignUpViewState extends State<SignUpView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final _db = FirebaseFirestore.instance;
+  final _auth = FirebaseAuth.instance;
 
   Future<void> _signUp() async {
     if (_formKey.currentState?.validate() ?? false) {
       try {
-        UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
         );
 
         // Add user to Firestore
-        await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
+        await _db.collection('users').doc(userCredential.user!.uid).set({
           'email': _emailController.text.trim(),
           'createdAt': Timestamp.now(),
         });

@@ -6,14 +6,14 @@ import 'package:todo_firebase/views/tasks/widgets/task_detail_view.dart';
 
 class TaskWidget extends StatelessWidget {
   final Task task;
-  final VoidCallback onDismissed;
-  final VoidCallback onMarkedComplete;
+  //final VoidCallback onDismissed;
+  //final VoidCallback onMarkedComplete;
 
   const TaskWidget({
     Key? key,
     required this.task,
-    required this.onDismissed,
-    required this.onMarkedComplete,
+    //required this.onDismissed,
+    //required this.onMarkedComplete,
   }) : super(key: key);
 
   @override
@@ -32,11 +32,11 @@ class TaskWidget extends StatelessWidget {
         key: Key(task.id),
         background: Container(color: Colors.red),
         onDismissed: (direction) {
-          if (direction == DismissDirection.startToEnd) {
+          /*if (direction == DismissDirection.startToEnd) {
             onMarkedComplete();
           } else {
             onDismissed();
-          }
+          }*/
         },
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

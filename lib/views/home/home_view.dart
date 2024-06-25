@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:todo_firebase/models/task.dart';
@@ -17,6 +19,7 @@ class HomeView extends StatefulWidget {
   @override
   State<HomeView> createState() => _HomeViewState();
 }
+
 class _HomeViewState extends State<HomeView> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -37,7 +40,7 @@ class _HomeViewState extends State<HomeView> {
         ),
       ),
     ).then((value) {
-      setState(() {}); // Refresh the state when returning from the TaskView
+      setState(() {});
     });
   }
 
@@ -58,7 +61,7 @@ class _HomeViewState extends State<HomeView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: HomeAppBar(onNotificationPressed: _testNotification),
-      drawer: const DrawerMenu(),
+      drawer: DrawerMenu(onSignOut: _signOut),
       body: StreamBuilder<List<Task>>(
         stream: taskService.getTasks(),
         builder: (context, snapshot) {
@@ -66,10 +69,13 @@ class _HomeViewState extends State<HomeView> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text("Error: ${snapshot.error}"));
+            return Center(child: Text("home_view : snapshot.hasError : Error: ${snapshot.error}"));
           }
           final tasks = snapshot.data ?? [];
+          log("home_view : tasks content = $tasks");
+          log("home_view : tasks content = ${tasks.first.title}");
           if (tasks.isEmpty) {
+            log("home_view : tasks empty");
             return const Center(
               child: Text("Pas encore de tâches"),
             );
@@ -80,8 +86,8 @@ class _HomeViewState extends State<HomeView> {
               final task = tasks[index];
               return TaskWidget(
                 task: task,
-                onDismissed: () => _deleteTask(task),
-                onMarkedComplete: () => _markTaskComplete(task),
+                //onDismissed: () => _deleteTask(task),
+                //onMarkedComplete: () => _markTaskComplete(task),
               );
             },
           );
