@@ -1,8 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/adapters.dart';
 import 'package:todo_firebase/models/task.dart';
 import 'package:todo_firebase/services/task_service.dart';
-import 'package:todo_firebase/utils/custom_str.dart';
+import 'package:todo_firebase/views/authentication/sign_in_view.dart';
 import 'package:todo_firebase/views/tasks/task_view.dart';
 import 'package:todo_firebase/views/home/components/drawer_menu.dart';
 import 'package:todo_firebase/views/home/components/fab.dart';
@@ -18,6 +18,15 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 class _HomeViewState extends State<HomeView> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  void _signOut() async {
+    await _auth.signOut();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const SignInView()),
+    );
+  }
+
   void _navigateToAddTask() {
     Navigator.of(context).push(
       MaterialPageRoute(

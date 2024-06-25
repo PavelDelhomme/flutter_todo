@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'firebase_options.dart';
 import 'views/authentication/auth_wrapper.dart';
 import 'views/authentication/sign_in_view.dart';
