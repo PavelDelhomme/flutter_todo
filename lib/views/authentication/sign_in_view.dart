@@ -14,32 +14,13 @@ class _SignInViewState extends State<SignInView> {
   final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final _auth = FirebaseAuth.instance;
-  // bool _isLoading = false;
-  /*
-  Future<void> _signIn() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text,
-        password: _passwordController.text,
-      );
-    } on FirebaseAuthException catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message ?? 'An error occurred')),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }*/
+  bool _isLoading = false;
 
   Future<void> _signIn() async {
     if (_formKey.currentState?.validate() ?? false) {
+      setState(() {
+        _isLoading = true;
+      });
       try {
         await _auth.signInWithEmailAndPassword(
           email: _emailController.text.trim(),
@@ -49,6 +30,10 @@ class _SignInViewState extends State<SignInView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to sign in: $e')),
         );
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
@@ -90,7 +75,9 @@ class _SignInViewState extends State<SignInView> {
                 },
               ),
               const SizedBox(height: 16.0),
-              ElevatedButton(
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(
                 onPressed: _signIn,
                 child: const Text('Sign In'),
               ),

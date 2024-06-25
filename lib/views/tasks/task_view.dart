@@ -81,7 +81,11 @@ class _TaskViewState extends State<TaskView> {
           widget.task?.priorityLevel = priorityLevel;
           widget.task?.reminder = reminder;
           widget.task?.userId = FirebaseAuth.instance.currentUser!.uid;
-          taskService.updateTask(widget.task!);
+          taskService.updateTask(widget.task!).then((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Tâche mise à jours avec succès.")),
+            );
+          });
         } else {
           var task = Task.create(
             title: widget.taskControllerForTitle.text,
@@ -92,7 +96,11 @@ class _TaskViewState extends State<TaskView> {
             reminder: reminder,
             userId: FirebaseAuth.instance.currentUser!.uid,
           );
-          taskService.addTask(task);
+          taskService.addTask(task).then((_) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Tâche ajoutée avec succès.')),
+            );
+          });
         }
 
         if (reminder != null) {

@@ -45,12 +45,22 @@ class _HomeViewState extends State<HomeView> {
   }
 
   void _deleteTask(Task task) {
-    taskService.deleteTask(task.id);
+    taskService.deleteTask(task.id).then((_) {
+      setState(() {}); // Refresh the UI
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Task deleted successfully')),
+      );
+    });
   }
 
   void _markTaskComplete(Task task) {
     task.isCompleted = !task.isCompleted;
-    taskService.updateTask(task);
+    taskService.updateTask(task).then((_) {
+      setState(() {}); // Refresh the UI
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Task status updated')),
+      );
+    });
   }
 
   void _testNotification() {
@@ -69,11 +79,11 @@ class _HomeViewState extends State<HomeView> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text("home_view : snapshot.hasError : Error: ${snapshot.error}"));
+            log("home_view : snapshot.hasError : Error: ${snapshot.error}");
+            return Center(child: Text("Error: ${snapshot.error}"));
           }
           final tasks = snapshot.data ?? [];
           log("home_view : tasks content = $tasks");
-          log("home_view : tasks content = ${tasks.first.title}");
           if (tasks.isEmpty) {
             log("home_view : tasks empty");
             return const Center(
@@ -86,8 +96,8 @@ class _HomeViewState extends State<HomeView> {
               final task = tasks[index];
               return TaskWidget(
                 task: task,
-                //onDismissed: () => _deleteTask(task),
-                //onMarkedComplete: () => _markTaskComplete(task),
+                onDismissed: () => _deleteTask(task),
+                onMarkedComplete: () => _markTaskComplete(task),
               );
             },
           );

@@ -1,5 +1,5 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
 import '../../settings/settings_view.dart';
 
 class DrawerMenu extends StatelessWidget {
@@ -9,19 +9,20 @@ class DrawerMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          const DrawerHeader(
-            decoration: BoxDecoration(
-              color: Colors.blue,
-            ),
-            child: Text(
-              'Menu',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
+          UserAccountsDrawerHeader(
+            accountName: Text(user?.displayName ?? 'User'),
+            accountEmail: Text(user?.email ?? 'No email'),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Text(
+                user?.email?.substring(0, 1).toUpperCase() ?? 'U',
+                style: const TextStyle(fontSize: 40.0),
               ),
             ),
           ),

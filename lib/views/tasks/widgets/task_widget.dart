@@ -6,14 +6,14 @@ import 'package:todo_firebase/views/tasks/widgets/task_detail_view.dart';
 
 class TaskWidget extends StatelessWidget {
   final Task task;
-  //final VoidCallback onDismissed;
-  //final VoidCallback onMarkedComplete;
+  final VoidCallback onDismissed;
+  final VoidCallback onMarkedComplete;
 
   const TaskWidget({
     Key? key,
     required this.task,
-    //required this.onDismissed,
-    //required this.onMarkedComplete,
+    required this.onDismissed,
+    required this.onMarkedComplete,
   }) : super(key: key);
 
   @override
@@ -32,20 +32,20 @@ class TaskWidget extends StatelessWidget {
         key: Key(task.id),
         background: Container(color: Colors.red),
         onDismissed: (direction) {
-          /*if (direction == DismissDirection.startToEnd) {
+          if (direction == DismissDirection.startToEnd) {
             onMarkedComplete();
           } else {
             onDismissed();
-          }*/
+          }
         },
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: task.isCompleted
-                ? CustomColors.primaryColor.withOpacity(0.6)
+                ? Colors.grey.shade200
                 : isExpired
-                  ? Colors.red.withOpacity(0.6)
-                  : Colors.white,
+                ? Colors.red.withOpacity(0.6)
+                : Colors.white,
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
@@ -57,15 +57,12 @@ class TaskWidget extends StatelessWidget {
           ),
           child: ListTile(
             leading: GestureDetector(
-              onTap: () {
-                task.isCompleted = !task.isCompleted;
-                task.save();
-              },
+              onTap: onMarkedComplete,
               child: Container(
                 decoration: BoxDecoration(
-                  color: task.isCompleted ? CustomColors.primaryColor : Colors.white,
+                  color: task.isCompleted ? CustomColors.primaryColor : Colors.grey,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.grey, width: 0.8),
+                  border: Border.all(color: Colors.white, width: 0.8),
                 ),
                 child: const Icon(Icons.check, color: Colors.white),
               ),
@@ -75,9 +72,10 @@ class TaskWidget extends StatelessWidget {
               child: Text(
                 task.title,
                 style: TextStyle(
-                  color: task.isCompleted ? CustomColors.primaryColor : Colors.black,
+                  color: task.isCompleted ? Colors.grey : Colors.black,
                   fontWeight: FontWeight.w500,
                   decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                  fontStyle: task.isCompleted ? FontStyle.italic : FontStyle.normal,
                 ),
               ),
             ),
@@ -87,9 +85,10 @@ class TaskWidget extends StatelessWidget {
                 Text(
                   task.subtitle,
                   style: TextStyle(
-                    color: task.isCompleted ? CustomColors.primaryColor : const Color.fromRGBO(0, 0, 0, 1),
+                    color: task.isCompleted ? Colors.grey : const Color.fromRGBO(0, 0, 0, 1),
                     fontWeight: FontWeight.w300,
                     decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                    fontStyle: task.isCompleted ? FontStyle.italic : FontStyle.normal,
                   ),
                 ),
                 Align(
@@ -101,11 +100,11 @@ class TaskWidget extends StatelessWidget {
                       children: [
                         Text(
                           DateFormat('hh:mm a').format(task.createdAtTime),
-                          style: TextStyle(fontSize: 14, color: task.isCompleted ? Colors.white : Colors.white60),
+                          style: TextStyle(fontSize: 14, color: task.isCompleted ? Colors.grey : Colors.black54),
                         ),
                         Text(
                           DateFormat.yMMMEd().format(task.createdAtDate),
-                          style: TextStyle(fontSize: 12, color: task.isCompleted ? Colors.white : Colors.white70),
+                          style: TextStyle(fontSize: 12, color: task.isCompleted ? Colors.grey : Colors.black54),
                         ),
                       ],
                     ),
