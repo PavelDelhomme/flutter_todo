@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive/hive.dart';
 import 'package:todo_firebase/views/tasks/components/task_app_bar.dart';
 import 'package:todo_firebase/models/task.dart';
-import 'package:todo_firebase/utils/custom_str.dart';
 import '../../services/notification_service.dart';
 import '../../services/task_service.dart';
 import 'forms/task_form.dart';
@@ -25,18 +24,16 @@ class TaskView extends StatefulWidget {
 }
 
 class _TaskViewState extends State<TaskView> {
-  var title;
-  var subtitle;
-  DateTime? time;
-  DateTime? date;
+  DateTime? startDate;
+  DateTime? endDate;
   DateTime? reminder;
   String priorityLevel = 'Neutre';
 
   @override
   void initState() {
     super.initState();
-    time = widget.task?.createdAtTime ?? DateTime.now().add(const Duration(hours: 1));
-    date = widget.task?.createdAtDate ?? DateTime.now();
+    startDate = widget.task?.startDate ?? DateTime.now();
+    endDate = widget.task?.endDate ?? DateTime.now().add(const Duration(hours: 1));
     priorityLevel = widget.task?.priorityLevel ?? 'Neutre';
     reminder = widget.task?.reminder;
     if (widget.task != null) {
@@ -45,15 +42,15 @@ class _TaskViewState extends State<TaskView> {
     }
   }
 
-  void _onTimeSelected(DateTime selectedTime) {
+  void _onStartDateSelected(DateTime selectedDate) {
     setState(() {
-      time = selectedTime;
+      startDate = selectedDate;
     });
   }
 
-  void _onDateSelected(DateTime selectedDate) {
+  void _onEndDateSelected(DateTime selectedDate) {
     setState(() {
-      date = selectedDate;
+      endDate = selectedDate;
     });
   }
 
@@ -76,22 +73,22 @@ class _TaskViewState extends State<TaskView> {
         if (widget.task != null) {
           widget.task?.title = widget.taskControllerForTitle.text;
           widget.task?.subtitle = widget.taskControllerForSubtitle.text;
-          widget.task?.createdAtTime = time ?? widget.task!.createdAtTime;
-          widget.task?.createdAtDate = date ?? widget.task!.createdAtDate;
+          widget.task?.startDate = startDate ?? widget.task!.startDate;
+          widget.task?.endDate = endDate ?? widget.task!.endDate;
           widget.task?.priorityLevel = priorityLevel;
           widget.task?.reminder = reminder;
           widget.task?.userId = FirebaseAuth.instance.currentUser!.uid;
           taskService.updateTask(widget.task!).then((_) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Tâche mise à jours avec succès.")),
+              const SnackBar(content: Text("Tâche mise à jour avec succès.")),
             );
           });
         } else {
           var task = Task.create(
             title: widget.taskControllerForTitle.text,
-            createdAtTime: time ?? DateTime.now(),
-            createdAtDate: date ?? DateTime.now(),
             subtitle: widget.taskControllerForSubtitle.text,
+            startDate: startDate ?? DateTime.now(),
+            endDate: endDate ?? DateTime.now().add(const Duration(hours: 1)),
             priorityLevel: priorityLevel,
             reminder: reminder,
             userId: FirebaseAuth.instance.currentUser!.uid,
@@ -112,21 +109,12 @@ class _TaskViewState extends State<TaskView> {
           );
         }
 
-        if (date != null) {
-          notificationService.scheduleDeadlineNotification(
-            id: widget.task?.id.hashCode ?? DateTime.now().hashCode,
-            title: widget.taskControllerForTitle.text,
-            body: 'La date d\'échéance de ${widget.taskControllerForTitle.text} est aujourd\'hui.',
-            deadlineDate: date!,
-          );
-        }
-
         Navigator.of(context).pop();
       } catch (error) {
         _showErrorDialog('Error', 'Une erreur est survenue pendant l\'enregistrement de la tâche.');
       }
     } else {
-      _showErrorDialog('Oops', 'Veuillez remplir tout les champs.');
+      _showErrorDialog('Oops', 'Veuillez remplir tous les champs.');
     }
   }
 
@@ -137,9 +125,10 @@ class _TaskViewState extends State<TaskView> {
         title: Text(title),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () {
-            Navigator.of(ctx).pop();
-          },
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+            },
             child: const Text('OK'),
           ),
         ],
@@ -172,12 +161,12 @@ class _TaskViewState extends State<TaskView> {
                   TaskForm(
                     taskControllerForTitle: widget.taskControllerForTitle,
                     taskControllerForSubtitle: widget.taskControllerForSubtitle,
-                    initialTime: time,
-                    initialDate: date,
+                    initialStartDate: startDate,
+                    initialEndDate: endDate,
                     initialPriorityLevel: priorityLevel,
                     initialReminder: reminder,
-                    onTimeSelected: _onTimeSelected,
-                    onDateSelected: _onDateSelected,
+                    onStartDateSelected: _onStartDateSelected,
+                    onEndDateSelected: _onEndDateSelected,
                     onReminderSelected: _onReminderSelected,
                     onPrioritySelected: _onPrioritySelected,
                   ),

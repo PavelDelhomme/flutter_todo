@@ -21,8 +21,8 @@ class TaskAdapter extends TypeAdapter<Task> {
       title: fields[1] as String,
       subtitle: fields[2] as String,
       isCompleted: fields[3] as bool,
-      createdAtDate: fields[4] as DateTime?,
-      createdAtTime: fields[5] as DateTime?,
+      startDate: fields[4] as DateTime,
+      endDate: fields[5] as DateTime,
       priorityLevel: fields[6] as String,
       reminder: fields[7] as DateTime?,
       userId: fields[8] as String,
@@ -42,9 +42,9 @@ class TaskAdapter extends TypeAdapter<Task> {
       ..writeByte(3)
       ..write(obj.isCompleted)
       ..writeByte(4)
-      ..write(obj.createdAtDate)
+      ..write(obj.startDate)
       ..writeByte(5)
-      ..write(obj.createdAtTime)
+      ..write(obj.endDate)
       ..writeByte(6)
       ..write(obj.priorityLevel)
       ..writeByte(7)

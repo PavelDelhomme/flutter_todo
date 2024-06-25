@@ -18,7 +18,7 @@ class TaskWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isExpired = task.createdAtDate.isBefore(DateTime.now());
+    final isExpired = task.endDate.isBefore(DateTime.now());
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -99,11 +99,11 @@ class TaskWidget extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          DateFormat('hh:mm a').format(task.createdAtTime),
+                          DateFormat.yMMMEd().format(task.endDate),
                           style: TextStyle(fontSize: 14, color: task.isCompleted ? Colors.grey : Colors.black54),
                         ),
                         Text(
-                          DateFormat.yMMMEd().format(task.createdAtDate),
+                          DateFormat.yMMMEd().format(task.endDate),
                           style: TextStyle(fontSize: 12, color: task.isCompleted ? Colors.grey : Colors.black54),
                         ),
                       ],

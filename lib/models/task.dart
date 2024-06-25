@@ -19,10 +19,10 @@ class Task extends HiveObject {
   bool isCompleted;
 
   @HiveField(4)
-  DateTime createdAtDate;
+  DateTime startDate;
 
   @HiveField(5)
-  DateTime createdAtTime;
+  DateTime endDate;
 
   @HiveField(6)
   String priorityLevel;
@@ -38,20 +38,18 @@ class Task extends HiveObject {
     required this.title,
     required this.subtitle,
     this.isCompleted = false,
-    DateTime? createdAtDate,
-    DateTime? createdAtTime,
+    required this.startDate,
+    required this.endDate,
     this.priorityLevel = 'Neutre',
     this.reminder,
     required this.userId,
-  })  : id = id ?? const Uuid().v4(),
-        createdAtDate = createdAtDate ?? DateTime.now(),
-        createdAtTime = createdAtTime ?? DateTime.now();
+  })  : id = id ?? const Uuid().v4();
 
   static Task create({
     required String title,
     required String subtitle,
-    DateTime? createdAtDate,
-    DateTime? createdAtTime,
+    required DateTime startDate,
+    required DateTime endDate,
     String priorityLevel = 'Neutre',
     DateTime? reminder,
     required String userId,
@@ -59,8 +57,8 @@ class Task extends HiveObject {
     return Task(
       title: title,
       subtitle: subtitle,
-      createdAtDate: createdAtDate,
-      createdAtTime: createdAtTime,
+      startDate: startDate,
+      endDate: endDate,
       priorityLevel: priorityLevel,
       reminder: reminder,
       userId: userId,
@@ -81,8 +79,8 @@ class Task extends HiveObject {
       'title': title,
       'subtitle': subtitle,
       'isCompleted': isCompleted,
-      'createdAtDate': createdAtDate,
-      'createdAtTime': createdAtTime,
+      'startDate': startDate,
+      'endDate': endDate,
       'priorityLevel': priorityLevel,
       'reminder': reminder,
       'userId': userId,
@@ -95,8 +93,8 @@ class Task extends HiveObject {
       title: map['title'],
       subtitle: map['subtitle'],
       isCompleted: map['isCompleted'],
-      createdAtDate: (map['createdAtDate'] as Timestamp).toDate(),
-      createdAtTime: (map['createdAtTime'] as Timestamp).toDate(),
+      startDate: (map['startDate'] as Timestamp).toDate(),
+      endDate: (map['endDate'] as Timestamp).toDate(),
       priorityLevel: map['priorityLevel'],
       reminder: map['reminder'] != null ? (map['reminder'] as Timestamp).toDate() : null,
       userId: map['userId'],

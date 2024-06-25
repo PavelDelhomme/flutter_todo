@@ -61,10 +61,10 @@ class _TaskDetailViewState extends State<TaskDetailView> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Icon(Icons.access_time, size: 20),
+                      const Icon(Icons.calendar_today, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        DateFormat('hh:mm a').format(task.createdAtTime),
+                        DateFormat.yMMMEd().format(task.startDate),
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],
@@ -75,7 +75,7 @@ class _TaskDetailViewState extends State<TaskDetailView> {
                       const Icon(Icons.calendar_today, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        DateFormat.yMMMEd().format(task.createdAtDate),
+                        DateFormat.yMMMEd().format(task.endDate),
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],

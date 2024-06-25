@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/task.dart';
@@ -10,7 +8,7 @@ class TaskService {
   Future<void> addTask(Task task) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      task.userId = user.uid;
+      task.userId = user.uid; // Ensure that the userId is set
       await taskCollection.doc(task.id).set(task.toMap());
     } else {
       throw Exception("User not authenticated");
@@ -28,11 +26,14 @@ class TaskService {
   Stream<List<Task>> getTasks() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      log("task_service.dart => user : $user");
-      return taskCollection.where('userId', isEqualTo: user.uid).snapshots().map((snapshot) =>
-          snapshot.docs.map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>)).toList());
+      return taskCollection
+          .where('userId', isEqualTo: user.uid)
+          .orderBy('startDate', descending: true)
+          .snapshots()
+          .map((snapshot) => snapshot.docs
+          .map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>))
+          .toList());
     } else {
-      log("task_service.dart => user not authenticated");
       throw Exception("User not authenticated");
     }
   }
