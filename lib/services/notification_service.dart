@@ -23,6 +23,10 @@ class NotificationService {
     if (await Permission.scheduleExactAlarm.isDenied) {
       await Permission.scheduleExactAlarm.request();
     }
+    final notificationStatus = await Permission.notification.status;
+    final alarmStatus = await Permission.scheduleExactAlarm.status;
+    print('Notification permission : $notificationStatus');
+    print('Alarm permission: $alarmStatus');
   }
 
   Future<void> showNotification({
@@ -40,19 +44,13 @@ class NotificationService {
     );
     const NotificationDetails platformChannelSpecifics =
     NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    print('Showing notification: $title - $body');
     await _flutterLocalNotificationsPlugin.show(
       id,
       title,
       body,
       platformChannelSpecifics,
-    );
-  }
-
-  Future<void> showTestNotification() async {
-    await showNotification(
-      id: 0,
-      title: "Test notification",
-      body: "This is a test for notification",
     );
   }
 
@@ -62,13 +60,14 @@ class NotificationService {
     required String body,
     required DateTime scheduledDate,
   }) async {
+    print('Scheduling notification : $title at $scheduledDate');
     await _flutterLocalNotificationsPlugin.zonedSchedule(
       id,
       title,
       body,
       tz.TZDateTime.from(scheduledDate, tz.local),
       const NotificationDetails(
-          android: AndroidNotificationDetails(
+        android: AndroidNotificationDetails(
           'task_reminder',
           'Task Reminder',
           channelDescription: 'Reminder de tâche',
@@ -78,7 +77,7 @@ class NotificationService {
       ),
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+      UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
     );
   }
@@ -88,15 +87,36 @@ class NotificationService {
     required String title,
     required String body,
     required DateTime reminderDate,
-}) async { await scheduleNotification(id: id, title: title, body: body, scheduledDate: reminderDate); }
+  }) async {
+    await scheduleNotification(
+      id: id,
+      title: title,
+      body: body,
+      scheduledDate: reminderDate,
+    );
+  }
 
-  Future<void> scheduleDeadlineNotification({
+  Future<void> scheduleMissedReminderNotification({
     required int id,
     required String title,
     required String body,
-    required DateTime deadlineDate,
-}) async { await scheduleNotification(id: id, title: title, body: body, scheduledDate: deadlineDate); }
-
+    required DateTime missedReminderDate,
+  }) async {
+    if (missedReminderDate.isBefore(DateTime.now())) {
+      await showNotification(
+        id: id,
+        title: title,
+        body: body,
+      );
+    } else {
+      await scheduleNotification(
+        id: id,
+        title: title,
+        body: body,
+        scheduledDate: missedReminderDate,
+      );
+    }
+  }
 }
 
 final NotificationService notificationService = NotificationService();

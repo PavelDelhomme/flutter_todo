@@ -48,12 +48,12 @@ class _TaskFormState extends State<TaskForm> {
     super.initState();
     startDate = widget.initialStartDate ?? DateTime.now();
     endDate = widget.initialEndDate ?? DateTime.now().add(const Duration(hours: 1));
-    reminder = widget.initialReminder;
+    reminder = widget.initialReminder ?? endDate?.subtract(Duration(minutes: 30));
     priorityLevel = widget.initialPriorityLevel;
   }
 
-  String formatDate(DateTime? date) {
-    return DateFormat.yMMMEd().format(date ?? DateTime.now());
+  String formatDateTime(DateTime? date) {
+    return DateFormat('yyyy-MM-dd – HH:mm').format(date ?? DateTime.now());
   }
 
   @override
@@ -80,7 +80,7 @@ class _TaskFormState extends State<TaskForm> {
           ),
           GestureDetector(
             onTap: () {
-              DatePickerBdaya.showDatePicker(
+              DatePickerBdaya.showDateTimePicker(
                 context,
                 showTitleActions: true,
                 minTime: DateTime(2000, 1, 1),
@@ -108,14 +108,14 @@ class _TaskFormState extends State<TaskForm> {
                 children: [
                   Text('Start Date: ', style: textTheme.titleMedium),
                   Expanded(child: Container()),
-                  Text(formatDate(startDate), style: textTheme.bodyLarge),
+                  Text(formatDateTime(startDate), style: textTheme.bodyLarge),
                 ],
               ),
             ),
           ),
           GestureDetector(
             onTap: () {
-              DatePickerBdaya.showDatePicker(
+              DatePickerBdaya.showDateTimePicker(
                 context,
                 showTitleActions: true,
                 minTime: DateTime(2000, 1, 1),
@@ -124,8 +124,10 @@ class _TaskFormState extends State<TaskForm> {
                 onConfirm: (selectedDate) {
                   setState(() {
                     endDate = selectedDate;
+                    reminder = selectedDate.subtract(Duration(minutes: 30)); // Set default reminder
                   });
                   widget.onEndDateSelected(selectedDate);
+                  widget.onReminderSelected(reminder!);
                 },
                 currentTime: endDate,
                 locale: LocaleType.en,
@@ -143,7 +145,7 @@ class _TaskFormState extends State<TaskForm> {
                 children: [
                   Text('End Date: ', style: textTheme.titleMedium),
                   Expanded(child: Container()),
-                  Text(formatDate(endDate), style: textTheme.bodyLarge),
+                  Text(formatDateTime(endDate), style: textTheme.bodyLarge),
                 ],
               ),
             ),
@@ -176,7 +178,7 @@ class _TaskFormState extends State<TaskForm> {
                 children: [
                   Text('Reminder: ', style: textTheme.titleMedium),
                   Expanded(child: Container()),
-                  Text(formatDate(reminder), style: textTheme.bodyLarge),
+                  Text(formatDateTime(reminder), style: textTheme.bodyLarge),
                 ],
               ),
             ),

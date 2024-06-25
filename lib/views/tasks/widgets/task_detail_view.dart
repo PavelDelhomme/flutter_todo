@@ -20,6 +20,11 @@ class _TaskDetailViewState extends State<TaskDetailView> {
   void initState() {
     super.initState();
     task = widget.task;
+    _openBox();
+  }
+
+  Future<void> _openBox() async {
+    await Hive.openBox<Task>('tasks');
   }
 
   Future<void> _refreshTask() async {
@@ -30,6 +35,10 @@ class _TaskDetailViewState extends State<TaskDetailView> {
         task = updatedTask;
       });
     }
+  }
+
+  String formatDateTime(DateTime? dateTime) {
+    return dateTime != null ? DateFormat('yyyy-MM-dd – HH:mm').format(dateTime) : 'No reminder set';
   }
 
   @override
@@ -64,7 +73,7 @@ class _TaskDetailViewState extends State<TaskDetailView> {
                       const Icon(Icons.calendar_today, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        DateFormat.yMMMEd().format(task.startDate),
+                        'Date début : ${formatDateTime(task.startDate)}',
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],
@@ -75,11 +84,23 @@ class _TaskDetailViewState extends State<TaskDetailView> {
                       const Icon(Icons.calendar_today, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        DateFormat.yMMMEd().format(task.endDate),
+                        'Echéance : ${formatDateTime(task.endDate)}',
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],
                   ),
+                  const SizedBox(height: 8),
+                  if (task.reminder != null)
+                    Row(
+                      children: [
+                        const Icon(Icons.alarm, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Rappel : ${formatDateTime(task.reminder)}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 16),
                   Text(
                     task.isCompleted ? 'Status: Complète' : 'Status: Incomplète',

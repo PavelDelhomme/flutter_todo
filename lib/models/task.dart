@@ -28,7 +28,7 @@ class Task extends HiveObject {
   String priorityLevel;
 
   @HiveField(7)
-  DateTime? reminder;
+  DateTime? reminder;  // Make reminder nullable
 
   @HiveField(8)
   String userId;
@@ -60,7 +60,7 @@ class Task extends HiveObject {
       startDate: startDate,
       endDate: endDate,
       priorityLevel: priorityLevel,
-      reminder: reminder,
+      reminder: reminder ?? endDate.subtract(Duration(minutes: 30)),  // Default reminder to 30 minutes before end date
       userId: userId,
     );
   }

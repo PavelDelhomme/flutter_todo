@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:hive_flutter/adapters.dart';
+import 'package:todo_firebase/models/task.dart';
 import 'firebase_options.dart';
 import 'views/authentication/auth_wrapper.dart';
 import 'views/authentication/sign_in_view.dart';
@@ -8,6 +10,10 @@ import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  Hive.registerAdapter(TaskAdapter());
+  await Hive.openBox<Task>('tasks');
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

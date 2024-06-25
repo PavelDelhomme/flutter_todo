@@ -16,6 +16,9 @@ class TaskWidget extends StatelessWidget {
     required this.onMarkedComplete,
   }) : super(key: key);
 
+  String formatDateTime(DateTime? dateTime) {
+    return dateTime != null ? DateFormat('yyyy-MM-dd – HH:mm').format(dateTime) : 'No reminder set';
+  }
   @override
   Widget build(BuildContext context) {
     final isExpired = task.endDate.isBefore(DateTime.now());
@@ -90,7 +93,7 @@ class TaskWidget extends StatelessWidget {
                     decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                     fontStyle: task.isCompleted ? FontStyle.italic : FontStyle.normal,
                   ),
-                ),
+                ), // Subtitle texte
                 Align(
                   alignment: Alignment.centerRight,
                   child: Padding(
@@ -99,13 +102,13 @@ class TaskWidget extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          DateFormat.yMMMEd().format(task.endDate),
-                          style: TextStyle(fontSize: 14, color: task.isCompleted ? Colors.grey : Colors.black54),
-                        ),
+                          'Début : ${formatDateTime(task.startDate)}',
+                          style: TextStyle(fontSize: 13, color: task.isCompleted ? Colors.grey : Colors.black54),
+                        ), // EndDate
                         Text(
-                          DateFormat.yMMMEd().format(task.endDate),
+                          'Fin : ${formatDateTime(task.endDate)}',
                           style: TextStyle(fontSize: 12, color: task.isCompleted ? Colors.grey : Colors.black54),
-                        ),
+                        ), // EndDate
                       ],
                     ),
                   ),

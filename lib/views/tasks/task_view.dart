@@ -35,7 +35,7 @@ class _TaskViewState extends State<TaskView> {
     startDate = widget.task?.startDate ?? DateTime.now();
     endDate = widget.task?.endDate ?? DateTime.now().add(const Duration(hours: 1));
     priorityLevel = widget.task?.priorityLevel ?? 'Neutre';
-    reminder = widget.task?.reminder;
+    reminder = widget.task?.reminder ?? endDate?.subtract(const Duration(minutes: 30));
     if (widget.task != null) {
       widget.taskControllerForTitle.text = widget.task!.title;
       widget.taskControllerForSubtitle.text = widget.task!.subtitle;
@@ -51,6 +51,7 @@ class _TaskViewState extends State<TaskView> {
   void _onEndDateSelected(DateTime selectedDate) {
     setState(() {
       endDate = selectedDate;
+      reminder = selectedDate.subtract(const Duration(minutes: 30));
     });
   }
 
@@ -66,7 +67,7 @@ class _TaskViewState extends State<TaskView> {
     });
   }
 
-  void _saveTask() {
+  void _saveTask() async {
     if (widget.taskControllerForTitle.text.isNotEmpty &&
         widget.taskControllerForSubtitle.text.isNotEmpty) {
       try {
@@ -78,11 +79,12 @@ class _TaskViewState extends State<TaskView> {
           widget.task?.priorityLevel = priorityLevel;
           widget.task?.reminder = reminder;
           widget.task?.userId = FirebaseAuth.instance.currentUser!.uid;
-          taskService.updateTask(widget.task!).then((_) {
+          await taskService.updateTask(widget.task!);
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Tâche mise à jour avec succès.")),
             );
-          });
+          }
         } else {
           var task = Task.create(
             title: widget.taskControllerForTitle.text,
@@ -93,23 +95,28 @@ class _TaskViewState extends State<TaskView> {
             reminder: reminder,
             userId: FirebaseAuth.instance.currentUser!.uid,
           );
-          taskService.addTask(task).then((_) {
+          await taskService.addTask(task);
+          print("Task ajoutée avec succes");
+          print("Tache ${widget.task}");
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Tâche ajoutée avec succès.')),
             );
-          });
+          }
         }
 
         if (reminder != null) {
-          notificationService.scheduleReminderNotification(
+          await notificationService.scheduleMissedReminderNotification(
             id: widget.task?.id.hashCode ?? DateTime.now().hashCode,
             title: widget.taskControllerForTitle.text,
             body: 'Rappel pour ${widget.taskControllerForTitle.text}',
-            reminderDate: reminder!,
+            missedReminderDate: reminder!,
           );
         }
 
-        Navigator.of(context).pop();
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
       } catch (error) {
         _showErrorDialog('Error', 'Une erreur est survenue pendant l\'enregistrement de la tâche.');
       }

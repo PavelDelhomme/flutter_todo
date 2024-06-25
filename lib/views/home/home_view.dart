@@ -63,14 +63,10 @@ class _HomeViewState extends State<HomeView> {
     });
   }
 
-  void _testNotification() {
-    notificationService.showTestNotification();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: HomeAppBar(onNotificationPressed: _testNotification),
+      appBar: HomeAppBar(),
       drawer: DrawerMenu(onSignOut: _signOut),
       body: StreamBuilder<List<Task>>(
         stream: taskService.getTasks(),
