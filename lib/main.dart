@@ -17,7 +17,18 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
   await notificationService.initialize();
+
+  final now = DateTime.now();
+  await notificationService.scheduleNotification(
+    id: 1,
+    title: 'Test Notification',
+    body: 'This is a test notification',
+    scheduledDate: now.add(Duration(minutes: 1)),
+  );
+  print("Test notification scheduled for ${now.add(Duration(minutes: 1))}");
+
   runApp(const MainApp());
 }
 

@@ -106,11 +106,11 @@ class _TaskViewState extends State<TaskView> {
         }
 
         if (reminder != null) {
-          await notificationService.scheduleMissedReminderNotification(
+          await notificationService.scheduleNotification(
             id: widget.task?.id.hashCode ?? DateTime.now().hashCode,
             title: widget.taskControllerForTitle.text,
             body: 'Rappel pour ${widget.taskControllerForTitle.text}',
-            missedReminderDate: reminder!,
+            scheduledDate: reminder!,
           );
         }
 
