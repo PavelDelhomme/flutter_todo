@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../home/home_view.dart';
-import 'sign_in_view.dart';
+import 'connexion_view.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -20,7 +20,7 @@ class AuthWrapper extends StatelessWidget {
         if (snapshot.hasData) {
           return const HomeView();
         }
-        return const SignInView();
+        return const ConnexionView();
       },
     );
   }

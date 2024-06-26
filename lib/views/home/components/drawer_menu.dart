@@ -1,11 +1,24 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import '../../authentication/connexion_view.dart';
 import '../../settings/settings_view.dart';
 
 class DrawerMenu extends StatelessWidget {
+  const DrawerMenu({Key? key, required this.onSignOut}) : super(key: key);
+
   final VoidCallback onSignOut;
 
-  const DrawerMenu({Key? key, required this.onSignOut}) : super(key: key);
+  Future<void> _signOut(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const ConnexionView()),
+          (Route<dynamic> route) => false,
+    );
+    log("Déconnexion utilisateur");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +66,7 @@ class DrawerMenu extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Déconnexion'),
-            onTap: onSignOut,
+            onTap: () => _signOut(context),
           ),
         ],
       ),

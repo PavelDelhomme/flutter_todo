@@ -1,15 +1,19 @@
+import 'dart:developer';
+
+import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'sign_up_view.dart';
+import '../home/home_view.dart';
+import 'inscription_view.dart';
 
-class SignInView extends StatefulWidget {
-  const SignInView({super.key});
+class ConnexionView extends StatefulWidget {
+  const ConnexionView({super.key});
 
   @override
-  _SignInViewState createState() => _SignInViewState();
+  _ConnexionViewState createState() => _ConnexionViewState();
 }
 
-class _SignInViewState extends State<SignInView> {
+class _ConnexionViewState extends State<ConnexionView> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -26,10 +30,26 @@ class _SignInViewState extends State<SignInView> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
+        log("connexion_view : _auth.signInWithEmailAndPassword passed");
+
+        // Redirection vers HomeView après connexion réussie
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeView()),
+        );
+      } on FirebaseAuthException catch (e) {
+        log("connexion_view : Echec de la connexion identifiant non valide");
+        Flushbar(
+          message: "Identifiants incorrects. Veuillez réessayer.",
+          duration: Duration(seconds: 3),
+          flushbarPosition: FlushbarPosition.TOP,
+        ).show(context);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to sign in: $e')),
+          SnackBar(content: Text('Echec de la connexion : $e')),
         );
+        log("connexion_view : Erreur de la connexion $e");
+        log("connexion_view : email passé : $_emailController");
+        log("connexion_view : password passé : $_passwordController");
       } finally {
         setState(() {
           _isLoading = false;
@@ -42,7 +62,7 @@ class _SignInViewState extends State<SignInView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sign In'),
+        title: const Text('Connexion'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -57,7 +77,7 @@ class _SignInViewState extends State<SignInView> {
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your email';
+                    return 'Veuillez indiquer votre email.';
                   }
                   return null;
                 },
@@ -65,11 +85,11 @@ class _SignInViewState extends State<SignInView> {
               const SizedBox(height: 16.0),
               TextFormField(
                 controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Password'),
+                decoration: const InputDecoration(labelText: 'Mot de passe'),
                 obscureText: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter your password';
+                    return 'Veuillez indiquer un mot de passe.';
                   }
                   return null;
                 },
@@ -79,15 +99,15 @@ class _SignInViewState extends State<SignInView> {
                   ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton(
                 onPressed: _signIn,
-                child: const Text('Sign In'),
+                child: const Text('Connexion'),
               ),
               TextButton(
                 onPressed: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const SignUpView()),
+                    MaterialPageRoute(builder: (context) => const InscriptionView()),
                   );
                 },
-                child: const Text('Don\'t have an account? Sign Up'),
+                child: const Text('Pas de compte ? Inscrivez-vous !'),
               )
             ],
           ),

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:hive_flutter/adapters.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:todo_firebase/models/task.dart';
+import 'package:todo_firebase/views/authentication/connexion_view.dart';
+import 'package:todo_firebase/views/home/home_view.dart';
 import 'firebase_options.dart';
 import 'views/authentication/auth_wrapper.dart';
-import 'views/authentication/sign_in_view.dart';
-import 'views/home/home_view.dart';
 import 'services/notification_service.dart';
 
 void main() async {
@@ -44,7 +44,7 @@ class MainApp extends StatelessWidget {
       ),
       home: const AuthWrapper(),
       routes: {
-        '/sign-in': (context) => const SignInView(),
+        '/sign-in': (context) => const ConnexionView(),
         '/home': (context) => const HomeView(),
       },
     );

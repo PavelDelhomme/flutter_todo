@@ -1,16 +1,14 @@
 import 'dart:developer';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:todo_firebase/models/task.dart';
 import 'package:todo_firebase/services/task_service.dart';
-import 'package:todo_firebase/views/authentication/sign_in_view.dart';
+import 'package:todo_firebase/views/authentication/connexion_view.dart';
 import 'package:todo_firebase/views/tasks/task_view.dart';
 import 'package:todo_firebase/views/home/components/drawer_menu.dart';
 import 'package:todo_firebase/views/home/components/fab.dart';
 import 'package:todo_firebase/views/home/components/app_bar.dart';
 import 'package:todo_firebase/views/tasks/widgets/task_widget.dart';
-
 import '../../services/notification_service.dart';
 
 class HomeView extends StatefulWidget {
@@ -26,7 +24,7 @@ class _HomeViewState extends State<HomeView> {
   void _signOut() async {
     await _auth.signOut();
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const SignInView()),
+      MaterialPageRoute(builder: (context) => const ConnexionView()),
     );
   }
 
@@ -48,7 +46,7 @@ class _HomeViewState extends State<HomeView> {
     taskService.deleteTask(task.id).then((_) {
       setState(() {}); // Refresh the UI
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Task deleted successfully')),
+        const SnackBar(content: Text('Tâche supprimée avec succès')),
       );
     });
   }
@@ -58,7 +56,7 @@ class _HomeViewState extends State<HomeView> {
     taskService.updateTask(task).then((_) {
       setState(() {}); // Refresh the UI
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Task status updated')),
+        const SnackBar(content: Text('Statut de la tâche mis à jour')),
       );
     });
   }
@@ -76,7 +74,7 @@ class _HomeViewState extends State<HomeView> {
           }
           if (snapshot.hasError) {
             log("home_view : snapshot.hasError : Error: ${snapshot.error}");
-            return Center(child: Text("Error: ${snapshot.error}"));
+            return Center(child: Text("Erreur: ${snapshot.error}"));
           }
           final tasks = snapshot.data ?? [];
           log("home_view : tasks content = $tasks");

@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  another_flushbar: ^1.10.24
   flutter_datetime_picker_bdaya: ^3.0.2
   flutter_local_notifications: ^17.1.2
   hive: ^2.2.3
