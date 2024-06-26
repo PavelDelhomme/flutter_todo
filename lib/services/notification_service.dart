@@ -72,7 +72,6 @@ class NotificationService {
   }) async {
     print("Scheduling notification: $title at $scheduledDate");
 
-    // Ajoutez des journaux pour vérifier les valeurs de la date et heure
     final scheduledTZDateTime = tz.TZDateTime.from(scheduledDate, tz.local);
     print("Scheduled TZDateTime: $scheduledTZDateTime");
 
@@ -93,8 +92,10 @@ class NotificationService {
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
-    );
-    print("Notification scheduled: $title at $scheduledDate");
+    ).then((value) => print("Notification scheduled successfully: $title at $scheduledDate"))
+        .catchError((error) {
+      print("Error scheduling notification: $error");
+    });
   }
 
   Future<void> scheduleMissedReminderNotification({
@@ -120,8 +121,10 @@ class NotificationService {
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
-    );
-    print("Missed task notification scheduled: $title at $missedReminderDate");
+    ).then((value) => print("Missed task notification scheduled successfully: $title at $missedReminderDate"))
+        .catchError((error) {
+      print("Error scheduling missed task notification: $error");
+    });
   }
 }
 
