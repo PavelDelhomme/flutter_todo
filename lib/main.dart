@@ -19,14 +19,12 @@ void main() async {
   );
 
   await notificationService.initialize();
-
-  final now = DateTime.now();
-  await notificationService.showNotification(
-    id: 1,
+  await notificationService.scheduleNotification(
+    id: 0,
     title: 'Test Notification',
-    body: 'This is a test notification',
+    body: 'This is a test notification scheduled in 5 seconds',
+    scheduledDate: DateTime.now().add(Duration(seconds: 5)),
   );
-  print("Test notification scheduled for ${now.add(Duration(minutes: 1))}");
 
   runApp(const MainApp());
 }

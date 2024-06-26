@@ -4,17 +4,20 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
 
 class NotificationService {
-  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
+  final AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  final InitializationSettings initializationSettings;
+
+  NotificationService()
+      : initializationSettings = InitializationSettings(
+    android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+  );
 
   Future<void> initialize() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
-    final InitializationSettings initializationSettings =
-    InitializationSettings(android: initializationSettingsAndroid);
     await _flutterLocalNotificationsPlugin.initialize(initializationSettings);
     tz.initializeTimeZones();
-
     await _requestPermissions();
     print("NotificationService initialized");
   }
@@ -44,16 +47,14 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-    AndroidNotificationDetails(
+    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'task_reminder',
       'Task Reminder',
       channelDescription: 'Reminder de tâche',
       importance: Importance.max,
       priority: Priority.high,
     );
-    const NotificationDetails platformChannelSpecifics =
-    NotificationDetails(android: androidPlatformChannelSpecifics);
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
     await _flutterLocalNotificationsPlugin.show(
       id,
       title,
@@ -70,11 +71,16 @@ class NotificationService {
     required DateTime scheduledDate,
   }) async {
     print("Scheduling notification: $title at $scheduledDate");
+
+    // Ajoutez des journaux pour vérifier les valeurs de la date et heure
+    final scheduledTZDateTime = tz.TZDateTime.from(scheduledDate, tz.local);
+    print("Scheduled TZDateTime: $scheduledTZDateTime");
+
     await _flutterLocalNotificationsPlugin.zonedSchedule(
       id,
       title,
       body,
-      tz.TZDateTime.from(scheduledDate, tz.local),
+      scheduledTZDateTime,
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'task_reminder',
@@ -85,8 +91,7 @@ class NotificationService {
         ),
       ),
       androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-      UILocalNotificationDateInterpretation.absoluteTime,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
     );
     print("Notification scheduled: $title at $scheduledDate");
@@ -113,8 +118,7 @@ class NotificationService {
         ),
       ),
       androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-      UILocalNotificationDateInterpretation.absoluteTime,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
     );
     print("Missed task notification scheduled: $title at $missedReminderDate");
