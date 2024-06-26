@@ -62,6 +62,63 @@ class NotificationService {
     );
     print("Notification shown: $title - $body");
   }
+
+  Future<void> scheduleNotification({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime scheduledDate,
+  }) async {
+    print("Scheduling notification: $title at $scheduledDate");
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tz.TZDateTime.from(scheduledDate, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'task_reminder',
+          'Task Reminder',
+          channelDescription: 'Reminder de tâche',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      ),
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation:
+      UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+    print("Notification scheduled: $title at $scheduledDate");
+  }
+
+  Future<void> scheduleMissedReminderNotification({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime missedReminderDate,
+  }) async {
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      id,
+      title,
+      body,
+      tz.TZDateTime.from(missedReminderDate, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'missed_task',
+          'Missed Task',
+          channelDescription: 'Notification for missed tasks',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      ),
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation:
+      UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+    print("Missed task notification scheduled: $title at $missedReminderDate");
+  }
 }
 
 final NotificationService notificationService = NotificationService();
