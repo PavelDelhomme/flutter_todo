@@ -89,18 +89,6 @@ class _TaskDetailViewState extends State<TaskDetailView> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  if (task.reminder != null)
-                    Row(
-                      children: [
-                        const Icon(Icons.alarm, size: 20),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Rappel : ${formatDateTime(task.reminder)}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
                   const SizedBox(height: 16),
                   Text(
                     task.isCompleted ? 'Status: Complète' : 'Status: Incomplète',

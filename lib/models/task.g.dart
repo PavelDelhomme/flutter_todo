@@ -24,15 +24,14 @@ class TaskAdapter extends TypeAdapter<Task> {
       startDate: fields[4] as DateTime,
       endDate: fields[5] as DateTime,
       priorityLevel: fields[6] as String,
-      reminder: fields[7] as DateTime,
-      userId: fields[8] as String,
+      userId: fields[7] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, Task obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -48,8 +47,6 @@ class TaskAdapter extends TypeAdapter<Task> {
       ..writeByte(6)
       ..write(obj.priorityLevel)
       ..writeByte(7)
-      ..write(obj.reminder)
-      ..writeByte(8)
       ..write(obj.userId);
   }
 

@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:flutter_datetime_picker_bdaya/flutter_datetime_picker_bdaya.dart';
 import 'tf_datepicker.dart';
 import 'tf_subtitle.dart';
-import 'tf_time_picker.dart';
 import 'tf_title.dart';
 import 'tf_priority.dart';
 
@@ -13,10 +12,8 @@ class TaskForm extends StatefulWidget {
   final DateTime? initialStartDate;
   final DateTime? initialEndDate;
   final String initialPriorityLevel;
-  final DateTime? initialReminder;
   final Function(DateTime) onStartDateSelected;
   final Function(DateTime) onEndDateSelected;
-  final Function(DateTime) onReminderSelected;
   final Function(String?) onPrioritySelected;
 
   const TaskForm({
@@ -26,10 +23,8 @@ class TaskForm extends StatefulWidget {
     this.initialStartDate,
     this.initialEndDate,
     this.initialPriorityLevel = 'Neutre',
-    this.initialReminder,
     required this.onStartDateSelected,
     required this.onEndDateSelected,
-    required this.onReminderSelected,
     required this.onPrioritySelected,
   }) : super(key: key);
 
@@ -40,7 +35,6 @@ class TaskForm extends StatefulWidget {
 class _TaskFormState extends State<TaskForm> {
   DateTime? startDate;
   DateTime? endDate;
-  DateTime? reminder;
   late String priorityLevel;
 
   @override
@@ -48,7 +42,6 @@ class _TaskFormState extends State<TaskForm> {
     super.initState();
     startDate = widget.initialStartDate ?? DateTime.now();
     endDate = widget.initialEndDate ?? DateTime.now().add(const Duration(hours: 1));
-    reminder = widget.initialReminder ?? endDate?.subtract(Duration(minutes: 30));
     priorityLevel = widget.initialPriorityLevel;
   }
 
@@ -62,7 +55,7 @@ class _TaskFormState extends State<TaskForm> {
 
     return SizedBox(
       width: double.infinity,
-      height: 600,
+      height: 500, // Adjust the height accordingly
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -124,10 +117,8 @@ class _TaskFormState extends State<TaskForm> {
                 onConfirm: (selectedDate) {
                   setState(() {
                     endDate = selectedDate;
-                    reminder = selectedDate.subtract(Duration(minutes: 30)); // Set default reminder
                   });
                   widget.onEndDateSelected(selectedDate);
-                  widget.onReminderSelected(reminder!);
                 },
                 currentTime: endDate,
                 locale: LocaleType.en,
@@ -146,39 +137,6 @@ class _TaskFormState extends State<TaskForm> {
                   Text('End Date: ', style: textTheme.titleMedium),
                   Expanded(child: Container()),
                   Text(formatDateTime(endDate), style: textTheme.bodyLarge),
-                ],
-              ),
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              DatePickerBdaya.showDateTimePicker(
-                context,
-                showTitleActions: true,
-                minTime: DateTime.now(),
-                onChanged: (_) {},
-                onConfirm: (selectedReminder) {
-                  setState(() {
-                    reminder = selectedReminder;
-                  });
-                  widget.onReminderSelected(selectedReminder);
-                },
-                currentTime: reminder,
-              );
-            },
-            child: Container(
-              margin: const EdgeInsets.symmetric(vertical: 10),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: Colors.grey.shade300, width: 1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  Text('Reminder: ', style: textTheme.titleMedium),
-                  Expanded(child: Container()),
-                  Text(formatDateTime(reminder), style: textTheme.bodyLarge),
                 ],
               ),
             ),

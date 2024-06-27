@@ -28,9 +28,6 @@ class Task extends HiveObject {
   String priorityLevel;
 
   @HiveField(7)
-  DateTime? reminder;  // Make reminder nullable
-
-  @HiveField(8)
   String userId;
 
   Task({
@@ -41,9 +38,8 @@ class Task extends HiveObject {
     required this.startDate,
     required this.endDate,
     this.priorityLevel = 'Neutre',
-    this.reminder,
     required this.userId,
-  })  : id = id ?? const Uuid().v4();
+  }) : id = id ?? const Uuid().v4();
 
   static Task create({
     required String title,
@@ -51,7 +47,6 @@ class Task extends HiveObject {
     required DateTime startDate,
     required DateTime endDate,
     String priorityLevel = 'Neutre',
-    DateTime? reminder,
     required String userId,
   }) {
     return Task(
@@ -60,7 +55,6 @@ class Task extends HiveObject {
       startDate: startDate,
       endDate: endDate,
       priorityLevel: priorityLevel,
-      reminder: reminder ?? endDate.subtract(Duration(minutes: 30)),  // Default reminder to 30 minutes before end date
       userId: userId,
     );
   }
@@ -82,7 +76,6 @@ class Task extends HiveObject {
       'startDate': startDate,
       'endDate': endDate,
       'priorityLevel': priorityLevel,
-      'reminder': reminder,
       'userId': userId,
     };
   }
@@ -96,7 +89,6 @@ class Task extends HiveObject {
       startDate: (map['startDate'] as Timestamp).toDate(),
       endDate: (map['endDate'] as Timestamp).toDate(),
       priorityLevel: map['priorityLevel'],
-      reminder: map['reminder'] != null ? (map['reminder'] as Timestamp).toDate() : null,
       userId: map['userId'],
     );
   }

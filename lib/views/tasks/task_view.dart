@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:hive/hive.dart';
 import 'package:todo_firebase/views/tasks/components/task_app_bar.dart';
 import 'package:todo_firebase/models/task.dart';
 import '../../services/notification_service.dart';
@@ -26,7 +25,6 @@ class TaskView extends StatefulWidget {
 class _TaskViewState extends State<TaskView> {
   DateTime? startDate;
   DateTime? endDate;
-  DateTime? reminder;
   String priorityLevel = 'Neutre';
 
   @override
@@ -35,7 +33,6 @@ class _TaskViewState extends State<TaskView> {
     startDate = widget.task?.startDate ?? DateTime.now();
     endDate = widget.task?.endDate ?? DateTime.now().add(const Duration(hours: 1));
     priorityLevel = widget.task?.priorityLevel ?? 'Neutre';
-    reminder = widget.task?.reminder ?? endDate?.subtract(const Duration(minutes: 30));
     if (widget.task != null) {
       widget.taskControllerForTitle.text = widget.task!.title;
       widget.taskControllerForSubtitle.text = widget.task!.subtitle;
@@ -51,13 +48,6 @@ class _TaskViewState extends State<TaskView> {
   void _onEndDateSelected(DateTime selectedDate) {
     setState(() {
       endDate = selectedDate;
-      reminder = selectedDate.subtract(const Duration(minutes: 30));
-    });
-  }
-
-  void _onReminderSelected(DateTime selectedReminder) {
-    setState(() {
-      reminder = selectedReminder;
     });
   }
 
@@ -77,7 +67,6 @@ class _TaskViewState extends State<TaskView> {
           widget.task?.startDate = startDate ?? widget.task!.startDate;
           widget.task?.endDate = endDate ?? widget.task!.endDate;
           widget.task?.priorityLevel = priorityLevel;
-          widget.task?.reminder = reminder;
           widget.task?.userId = FirebaseAuth.instance.currentUser!.uid;
           await taskService.updateTask(widget.task!);
           if (mounted) {
@@ -92,26 +81,14 @@ class _TaskViewState extends State<TaskView> {
             startDate: startDate ?? DateTime.now(),
             endDate: endDate ?? DateTime.now().add(const Duration(hours: 1)),
             priorityLevel: priorityLevel,
-            reminder: reminder,
             userId: FirebaseAuth.instance.currentUser!.uid,
           );
           await taskService.addTask(task);
-          print("Task ajoutée avec succes");
-          print("Tache ${widget.task}");
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Tâche ajoutée avec succès.')),
             );
           }
-        }
-
-        if (reminder != null) {
-          await notificationService.scheduleNotification(
-            id: widget.task?.id.hashCode ?? DateTime.now().hashCode,
-            title: widget.taskControllerForTitle.text,
-            body: 'Rappel pour ${widget.taskControllerForTitle.text}',
-            scheduledDate: reminder!,
-          );
         }
 
         if (mounted) {
@@ -143,7 +120,6 @@ class _TaskViewState extends State<TaskView> {
     );
   }
 
-  /// Supprime une tâche
   dynamic deleteTask() {
     widget.task?.delete();
     Navigator.of(context).pop();
@@ -171,10 +147,8 @@ class _TaskViewState extends State<TaskView> {
                     initialStartDate: startDate,
                     initialEndDate: endDate,
                     initialPriorityLevel: priorityLevel,
-                    initialReminder: reminder,
                     onStartDateSelected: _onStartDateSelected,
                     onEndDateSelected: _onEndDateSelected,
-                    onReminderSelected: _onReminderSelected,
                     onPrioritySelected: _onPrioritySelected,
                   ),
                   ElevatedButton(
