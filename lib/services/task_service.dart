@@ -75,7 +75,6 @@ class TaskService {
       );
       log('Scheduled end date notification for task: ${task.title} at ${task.endDate}');
 
-      // Vérifiez l'état de la tâche 5 minutes après la fin pour voir si elle est en retard
       await notificationService.scheduleNotification(
         id: task.id.hashCode + 3,
         title: 'Tâche en retard',
