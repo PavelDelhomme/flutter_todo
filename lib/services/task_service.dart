@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/task.dart';
@@ -19,6 +20,7 @@ class TaskService {
   }
 
   Future<void> updateTask(Task task) async {
+    log("TaskService started and updateTask called");
     await taskCollection.doc(task.id).update(task.toMap());
     await _scheduleTaskNotifications(task);
   }
@@ -45,44 +47,52 @@ class TaskService {
   Future<void> _scheduleTaskNotifications(Task task) async {
     final now = DateTime.now();
 
-    if (task.reminder != null && task.reminder!.isAfter(now)) {
-      await notificationService.scheduleNotification(
-        id: task.id.hashCode,
-        title: 'Rappel de tâche',
-        body: 'Il est temps de commencer la tâche "${task.title}".',
-        scheduledDate: task.reminder!,
-      );
-      print('Scheduled reminder notification for task: ${task.title} at ${task.reminder}');
-    }
-
     if (task.startDate.isAfter(now)) {
       await notificationService.scheduleNotification(
-        id: task.id.hashCode + 2,
+        id: task.id.hashCode,
         title: 'Tâche à démarrer',
         body: 'La tâche "${task.title}" doit commencer.',
         scheduledDate: task.startDate,
       );
-      print('Scheduled start date notification for task: ${task.title} at ${task.startDate}');
+      log('Scheduled start date notification for task: ${task.title} at ${task.startDate}');
+
+      // Ajout d'une notification de pré-reminder 10 minutes avant le début de la tâche
+      await notificationService.scheduleNotification(
+        id: task.id.hashCode + 1,
+        title: 'Tâche à venir',
+        body: 'La tâche "${task.title}" va commencer dans 10 minutes.',
+        scheduledDate: task.startDate.subtract(const Duration(minutes: 10)),
+      );
+      log('Scheduled pre-start notification for task: ${task.title} at ${task.startDate.subtract(const Duration(minutes: 10))}');
     }
 
     if (task.endDate.isAfter(now)) {
       await notificationService.scheduleNotification(
-        id: task.id.hashCode + 1,
+        id: task.id.hashCode + 2,
         title: 'Tâche terminée',
         body: 'La tâche "${task.title}" est terminée.',
         scheduledDate: task.endDate,
       );
-      print('Scheduled end date notification for task: ${task.title} at ${task.endDate}');
+      log('Scheduled end date notification for task: ${task.title} at ${task.endDate}');
+
+      // Vérifiez l'état de la tâche 5 minutes après la fin pour voir si elle est en retard
+      await notificationService.scheduleNotification(
+        id: task.id.hashCode + 3,
+        title: 'Tâche en retard',
+        body: 'La tâche "${task.title}" est en retard. Veuillez la terminer.',
+        scheduledDate: task.endDate.add(const Duration(minutes: 5)),
+      );
+      log('Scheduled overdue notification for task: ${task.title} at ${task.endDate.add(const Duration(minutes: 5))}');
     }
 
     if (task.endDate.isBefore(now) && !task.isCompleted) {
       await notificationService.scheduleMissedReminderNotification(
-        id: task.id.hashCode + 3,
+        id: task.id.hashCode + 4,
         title: 'Tâche manquée',
         body: 'Vous avez manqué la tâche "${task.title}".',
         missedReminderDate: now.add(const Duration(seconds: 5)),
       );
-      print('Scheduled missed task notification for task: ${task.title}');
+      log('Scheduled missed task notification for task: ${task.title}');
     }
   }
 }
