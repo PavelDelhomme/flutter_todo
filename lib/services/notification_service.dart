@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -31,12 +32,12 @@ class NotificationService {
       throw Exception('Notification permissions not granted');
     }
 
-    var alarmStatus = await Permission.scheduleExactAlarm.status;
-    if (!alarmStatus.isGranted) {
-      alarmStatus = await Permission.scheduleExactAlarm.request();
-    }
-    if (!alarmStatus.isGranted) {
-      throw Exception('Exact alarm permissions not granted');
+    // Demande de permissions d'alarme exacte uniquement pour Android 12 (API 31) et versions ultérieures
+    if (Platform.isAndroid && (await Permission.scheduleExactAlarm.status.isDenied)) {
+      var alarmStatus = await Permission.scheduleExactAlarm.request();
+      if (!alarmStatus.isGranted) {
+        throw Exception('Exact alarm permissions not granted');
+      }
     }
 
     print("Notification permissions requested and granted");

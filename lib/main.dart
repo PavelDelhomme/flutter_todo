@@ -19,12 +19,6 @@ void main() async {
   );
 
   await notificationService.initialize();
-  await notificationService.scheduleNotification(
-    id: 0,
-    title: 'Test Notification',
-    body: 'This is a test notification scheduled in 5 seconds',
-    scheduledDate: DateTime.now().add(Duration(seconds: 5)),
-  );
 
   runApp(const MainApp());
 }

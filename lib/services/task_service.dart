@@ -75,7 +75,7 @@ class TaskService {
       print('Scheduled end date notification for task: ${task.title} at ${task.endDate}');
     }
 
-    if (task.endDate.isBefore(now)) {
+    if (task.endDate.isBefore(now) && !task.isCompleted) {
       await notificationService.scheduleMissedReminderNotification(
         id: task.id.hashCode + 3,
         title: 'Tâche manquée',
