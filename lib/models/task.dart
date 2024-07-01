@@ -30,6 +30,9 @@ class Task extends HiveObject {
   @HiveField(7)
   String userId;
 
+  @HiveField(8)
+  String category;
+
   Task({
     String? id,
     required this.title,
@@ -39,6 +42,7 @@ class Task extends HiveObject {
     required this.endDate,
     this.priorityLevel = 'Neutre',
     required this.userId,
+    this.category = '',
   }) : id = id ?? const Uuid().v4();
 
   static Task create({
@@ -48,6 +52,7 @@ class Task extends HiveObject {
     required DateTime endDate,
     String priorityLevel = 'Neutre',
     required String userId,
+    required String category,
   }) {
     return Task(
       title: title,
@@ -56,15 +61,8 @@ class Task extends HiveObject {
       endDate: endDate,
       priorityLevel: priorityLevel,
       userId: userId,
+      category: category,
     );
-  }
-
-  void saveTask() {
-    save();
-  }
-
-  void deleteTask() {
-    delete();
   }
 
   Map<String, dynamic> toMap() {
@@ -77,6 +75,7 @@ class Task extends HiveObject {
       'endDate': endDate,
       'priorityLevel': priorityLevel,
       'userId': userId,
+      'category': category,
     };
   }
 
@@ -90,6 +89,7 @@ class Task extends HiveObject {
       endDate: (map['endDate'] as Timestamp).toDate(),
       priorityLevel: map['priorityLevel'],
       userId: map['userId'],
+      category: map['category'],
     );
   }
 }

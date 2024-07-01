@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:todo_firebase/models/task.dart';
+import 'package:todo_firebase/models/category.dart';
 import 'package:todo_firebase/services/task_service.dart';
 import 'package:todo_firebase/views/authentication/connexion_view.dart';
 import 'package:todo_firebase/views/home/home_view.dart';
@@ -15,7 +15,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   Hive.registerAdapter(TaskAdapter());
+  Hive.registerAdapter(CategoryAdapter());
   await Hive.openBox<Task>('tasks');
+  await Hive.openBox<Category>('categories');
+  await Hive.openBox('settings');
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -40,16 +43,28 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Todo App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const AuthWrapper(),
-      routes: {
-        '/sign-in': (context) => const ConnexionView(),
-        '/home': (context) => const HomeView(),
+    return FutureBuilder(
+      future: Hive.openBox('settings'),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          var settingsBox = Hive.box('settings');
+          bool darkModeEnabled = settingsBox.get('darkModeEnabled', defaultValue: false);
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Todo App',
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+              brightness: darkModeEnabled ? Brightness.dark : Brightness.light,
+            ),
+            home: const AuthWrapper(),
+            routes: {
+              '/sign-in': (context) => const ConnexionView(),
+              '/home': (context) => const HomeView(),
+            },
+          );
+        } else {
+          return const CircularProgressIndicator();
+        }
       },
     );
   }

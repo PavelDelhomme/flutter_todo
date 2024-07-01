@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:todo_firebase/views/tasks/components/task_app_bar.dart';
+import 'package:hive/hive.dart';
 import 'package:todo_firebase/models/task.dart';
+import 'package:todo_firebase/models/category.dart';
 import '../../services/notification_service.dart';
 import '../../services/task_service.dart';
+import 'components/task_app_bar.dart';
 import 'forms/task_form.dart';
 
 class TaskView extends StatefulWidget {
@@ -26,6 +28,8 @@ class _TaskViewState extends State<TaskView> {
   DateTime? startDate;
   DateTime? endDate;
   String priorityLevel = 'Neutre';
+  String? selectedCategory;
+  List<Category> categories = [];
 
   @override
   void initState() {
@@ -33,10 +37,16 @@ class _TaskViewState extends State<TaskView> {
     startDate = widget.task?.startDate ?? DateTime.now();
     endDate = widget.task?.endDate ?? DateTime.now().add(const Duration(hours: 1));
     priorityLevel = widget.task?.priorityLevel ?? 'Neutre';
-    if (widget.task != null) {
-      widget.taskControllerForTitle.text = widget.task!.title;
-      widget.taskControllerForSubtitle.text = widget.task!.subtitle;
-    }
+    selectedCategory = widget.task?.category;
+    _loadCategories();
+  }
+
+  Future<void> _loadCategories() async {
+    taskService.getCategories().listen((categoryList) {
+      setState(() {
+        categories = categoryList;
+      });
+    });
   }
 
   void _onStartDateSelected(DateTime selectedDate) {
@@ -57,6 +67,12 @@ class _TaskViewState extends State<TaskView> {
     });
   }
 
+  void _onCategorySelected(String? categoryId) {
+    setState(() {
+      selectedCategory = categoryId;
+    });
+  }
+
   void _saveTask() async {
     if (widget.taskControllerForTitle.text.isNotEmpty &&
         widget.taskControllerForSubtitle.text.isNotEmpty) {
@@ -67,6 +83,7 @@ class _TaskViewState extends State<TaskView> {
           widget.task?.startDate = startDate ?? widget.task!.startDate;
           widget.task?.endDate = endDate ?? widget.task!.endDate;
           widget.task?.priorityLevel = priorityLevel;
+          widget.task?.category = selectedCategory ?? 'Autre';
           widget.task?.userId = FirebaseAuth.instance.currentUser!.uid;
           await taskService.updateTask(widget.task!);
           if (mounted) {
@@ -82,6 +99,7 @@ class _TaskViewState extends State<TaskView> {
             endDate: endDate ?? DateTime.now().add(const Duration(hours: 1)),
             priorityLevel: priorityLevel,
             userId: FirebaseAuth.instance.currentUser!.uid,
+            category: selectedCategory ?? 'Autre',
           );
           await taskService.addTask(task);
           if (mounted) {
@@ -141,20 +159,26 @@ class _TaskViewState extends State<TaskView> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  TaskForm(
-                    taskControllerForTitle: widget.taskControllerForTitle,
-                    taskControllerForSubtitle: widget.taskControllerForSubtitle,
-                    initialStartDate: startDate,
-                    initialEndDate: endDate,
-                    initialPriorityLevel: priorityLevel,
-                    onStartDateSelected: _onStartDateSelected,
-                    onEndDateSelected: _onEndDateSelected,
-                    onPrioritySelected: _onPrioritySelected,
-                  ),
+                  if (categories.isNotEmpty)
+                    TaskForm(
+                      taskControllerForTitle: widget.taskControllerForTitle,
+                      taskControllerForSubtitle: widget.taskControllerForSubtitle,
+                      initialStartDate: startDate,
+                      initialEndDate: endDate,
+                      initialPriorityLevel: priorityLevel,
+                      initialCategory: selectedCategory ?? 'Autre',
+                      categories: categories.map((c) => c.name).toList(),
+                      onStartDateSelected: _onStartDateSelected,
+                      onEndDateSelected: _onEndDateSelected,
+                      onPrioritySelected: _onPrioritySelected,
+                      onCategorySelected: _onCategorySelected,
+                    )
+                  else
+                    const CircularProgressIndicator(),
                   ElevatedButton(
                     onPressed: _saveTask,
                     child: const Text("Sauvegarder"),
-                  )
+                  ),
                 ],
               ),
             ),

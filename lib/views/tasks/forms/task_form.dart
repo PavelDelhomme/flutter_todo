@@ -5,6 +5,7 @@ import 'tf_datepicker.dart';
 import 'tf_subtitle.dart';
 import 'tf_title.dart';
 import 'tf_priority.dart';
+import 'tf_category.dart';
 
 class TaskForm extends StatefulWidget {
   final TextEditingController taskControllerForTitle;
@@ -12,9 +13,12 @@ class TaskForm extends StatefulWidget {
   final DateTime? initialStartDate;
   final DateTime? initialEndDate;
   final String initialPriorityLevel;
+  final String? initialCategory;
+  final List<String> categories;
   final Function(DateTime) onStartDateSelected;
   final Function(DateTime) onEndDateSelected;
   final Function(String?) onPrioritySelected;
+  final Function(String?) onCategorySelected;
 
   const TaskForm({
     Key? key,
@@ -23,9 +27,12 @@ class TaskForm extends StatefulWidget {
     this.initialStartDate,
     this.initialEndDate,
     this.initialPriorityLevel = 'Neutre',
+    this.initialCategory,
+    required this.categories,
     required this.onStartDateSelected,
     required this.onEndDateSelected,
     required this.onPrioritySelected,
+    required this.onCategorySelected,
   }) : super(key: key);
 
   @override
@@ -36,6 +43,7 @@ class _TaskFormState extends State<TaskForm> {
   DateTime? startDate;
   DateTime? endDate;
   late String priorityLevel;
+  late String? selectedCategory;
 
   @override
   void initState() {
@@ -43,6 +51,7 @@ class _TaskFormState extends State<TaskForm> {
     startDate = widget.initialStartDate ?? DateTime.now();
     endDate = widget.initialEndDate ?? DateTime.now().add(const Duration(hours: 1));
     priorityLevel = widget.initialPriorityLevel;
+    selectedCategory = widget.initialCategory;
   }
 
   String formatDateTime(DateTime? date) {
@@ -55,7 +64,7 @@ class _TaskFormState extends State<TaskForm> {
 
     return SizedBox(
       width: double.infinity,
-      height: 500, // Adjust the height accordingly
+      height: 600, // Adjust the height accordingly
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -69,6 +78,16 @@ class _TaskFormState extends State<TaskForm> {
                 priorityLevel = selectedPriority!;
               });
               widget.onPrioritySelected(selectedPriority);
+            },
+          ),
+          TaskFieldCategory(
+            selectedCategory: selectedCategory!,
+            categories: widget.categories,
+            onCategorySelected: (selectedCategory) {
+              setState(() {
+                this.selectedCategory = selectedCategory!;
+              });
+              widget.onCategorySelected(selectedCategory);
             },
           ),
           GestureDetector(
