@@ -8,12 +8,12 @@ class TaskFieldTimePicker extends StatelessWidget {
   final Function(DateTime?) showTime;
 
   const TaskFieldTimePicker({
-    Key? key,
+    super.key,
     required this.time,
     required this.onTimeSelected,
     required this.showTimeAsDateTime,
     required this.showTime,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -6,7 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../home/home_view.dart';
 
 class InscriptionView extends StatefulWidget {
-  const InscriptionView({Key? key}) : super(key: key);
+  const InscriptionView({super.key});
 
   @override
   _InscriptionViewState createState() => _InscriptionViewState();
@@ -38,7 +38,7 @@ class _InscriptionViewState extends State<InscriptionView> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Inscription réussie et connexion établie")),
+          const SnackBar(content: Text("Inscription réussie et connexion établie")),
         );
 
         Navigator.of(context).pushReplacement(

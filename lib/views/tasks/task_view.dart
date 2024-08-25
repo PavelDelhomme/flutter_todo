@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:todo_firebase/views/tasks/components/task_app_bar.dart';
 import 'package:todo_firebase/models/task.dart';
-import '../../services/notification_service.dart';
 import '../../services/task_service.dart';
 import 'forms/task_form.dart';
 
@@ -12,11 +11,11 @@ class TaskView extends StatefulWidget {
   final Task? task;
 
   const TaskView({
-    Key? key,
+    super.key,
     required this.taskControllerForTitle,
     required this.taskControllerForSubtitle,
     required this.task,
-  }) : super(key: key);
+  });
 
   @override
   State<TaskView> createState() => _TaskViewState();

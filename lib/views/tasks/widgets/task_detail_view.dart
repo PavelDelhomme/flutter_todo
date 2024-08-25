@@ -7,7 +7,7 @@ import 'package:hive/hive.dart';
 class TaskDetailView extends StatefulWidget {
   final Task task;
 
-  const TaskDetailView({Key? key, required this.task}) : super(key: key);
+  const TaskDetailView({super.key, required this.task});
 
   @override
   _TaskDetailViewState createState() => _TaskDetailViewState();
@@ -51,7 +51,7 @@ class _TaskDetailViewState extends State<TaskDetailView> {
         future: _refreshTask(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else {
             return Padding(
               padding: const EdgeInsets.all(16.0),
@@ -118,8 +118,8 @@ class _TaskDetailViewState extends State<TaskDetailView> {
           );
           _refreshTask();
         },
-        child: const Icon(Icons.edit),
         backgroundColor: Colors.blue,
+        child: const Icon(Icons.edit),
       ),
     );
   }

@@ -4,9 +4,9 @@ class TaskAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool isTaskAlreadyExist;
 
   const TaskAppBar({
-    Key? key,
+    super.key,
     required this.isTaskAlreadyExist,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

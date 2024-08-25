@@ -7,12 +7,12 @@ import 'package:permission_handler/permission_handler.dart';
 class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  final AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+  final AndroidInitializationSettings initializationSettingsAndroid = const AndroidInitializationSettings('@mipmap/ic_launcher');
 
   final InitializationSettings initializationSettings;
 
   NotificationService()
-      : initializationSettings = InitializationSettings(
+      : initializationSettings = const InitializationSettings(
     android: AndroidInitializationSettings('@mipmap/ic_launcher'),
   );
 

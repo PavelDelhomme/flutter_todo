@@ -5,10 +5,10 @@ class TaskFieldPriority extends StatelessWidget {
   final ValueChanged<String?> onPrioritySelected;
 
   const TaskFieldPriority({
-    Key? key,
+    super.key,
     required this.priorityLevel,
     required this.onPrioritySelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

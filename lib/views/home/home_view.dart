@@ -9,7 +9,6 @@ import 'package:todo_firebase/views/home/components/drawer_menu.dart';
 import 'package:todo_firebase/views/home/components/fab.dart';
 import 'package:todo_firebase/views/home/components/app_bar.dart';
 import 'package:todo_firebase/views/tasks/widgets/task_widget.dart';
-import '../../services/notification_service.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -64,7 +63,7 @@ class _HomeViewState extends State<HomeView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: HomeAppBar(),
+      appBar: const HomeAppBar(),
       drawer: DrawerMenu(onSignOut: _signOut),
       body: StreamBuilder<List<Task>>(
         stream: taskService.getTasks(),

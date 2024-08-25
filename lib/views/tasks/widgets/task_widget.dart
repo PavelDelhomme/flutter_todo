@@ -10,11 +10,11 @@ class TaskWidget extends StatelessWidget {
   final VoidCallback onMarkedComplete;
 
   const TaskWidget({
-    Key? key,
+    super.key,
     required this.task,
     required this.onDismissed,
     required this.onMarkedComplete,
-  }) : super(key: key);
+  });
 
   String formatDateTime(DateTime? dateTime) {
     return dateTime != null ? DateFormat('yyyy-MM-dd – HH:mm').format(dateTime) : 'No reminder set';

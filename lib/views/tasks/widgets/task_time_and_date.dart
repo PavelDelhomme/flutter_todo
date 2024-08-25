@@ -7,11 +7,11 @@ class TaskTimeAndDate extends StatelessWidget {
   final bool isCompleted;
 
   const TaskTimeAndDate({
-    Key? key,
+    super.key,
     required this.time,
     required this.date,
     required this.isCompleted,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

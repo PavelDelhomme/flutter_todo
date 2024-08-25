@@ -5,10 +5,10 @@ class TaskSubtitle extends StatelessWidget {
   final bool isCompleted;
 
   const TaskSubtitle({
-    Key? key,
+    super.key,
     required this.subtitle,
     required this.isCompleted,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

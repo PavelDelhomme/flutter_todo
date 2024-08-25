@@ -36,11 +36,11 @@ class _ConnexionViewState extends State<ConnexionView> {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),
         );
-      } on FirebaseAuthException catch (e) {
+      } on FirebaseAuthException {
         log("connexion_view : Echec de la connexion identifiant non valide");
         Flushbar(
           message: "Identifiants incorrects. Veuillez réessayer.",
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
           flushbarPosition: FlushbarPosition.TOP,
         ).show(context);
       } catch (e) {

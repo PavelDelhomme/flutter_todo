@@ -8,12 +8,12 @@ class TaskFieldDatePicker extends StatelessWidget {
   final Function(DateTime?) showDate;
 
   const TaskFieldDatePicker({
-    Key? key,
+    super.key,
     required this.date,
     required this.onDateSelected,
     required this.showDateAsDateTime,
     required this.showDate,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

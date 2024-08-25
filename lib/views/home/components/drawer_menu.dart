@@ -2,12 +2,11 @@ import 'dart:developer';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import '../../authentication/connexion_view.dart';
 import '../../settings/settings_view.dart';
 
 class DrawerMenu extends StatelessWidget {
-  const DrawerMenu({Key? key, required this.onSignOut}) : super(key: key);
+  const DrawerMenu({super.key, required this.onSignOut});
 
   final VoidCallback onSignOut;
 
