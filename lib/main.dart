@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:todo_firebase/models/task.dart';
+import 'package:todo_firebase/services/task_service.dart';
 import 'package:todo_firebase/views/authentication/connexion_view.dart';
 import 'package:todo_firebase/views/home/home_view.dart';
 import 'firebase_options.dart';
@@ -18,7 +21,16 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  await notificationService.initialize();
+  try {
+    await notificationService.initialize();
+  } catch (e) {
+    print('Error initializing notification service: $e');
+  }
+
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    await taskService.deleteTasksForDeletedUsers(); // Nettoyer les tâches des utilisateurs supprimés
+  }
 
   runApp(const MainApp());
 }

@@ -5,28 +5,68 @@ import '../models/task.dart';
 import '../services/notification_service.dart';
 
 class TaskService {
-  final CollectionReference taskCollection =
-  FirebaseFirestore.instance.collection('tasks');
+  final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
 
   Future<void> addTask(Task task) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       task.userId = user.uid;
-      await taskCollection.doc(task.id).set(task.toMap());
-      await _scheduleTaskNotifications(task);
+      log('Adding task for user: ${user.uid} with data: ${task.toMap()}');
+      try {
+        await taskCollection.doc(task.id).set(task.toMap());
+        log('Task added successfully');
+        await _scheduleTaskNotifications(task);
+      } catch (e) {
+        log('Error adding task: $e');
+      }
     } else {
       throw Exception("User not authenticated");
     }
   }
 
   Future<void> updateTask(Task task) async {
-    log("TaskService started and updateTask called");
-    await taskCollection.doc(task.id).update(task.toMap());
-    await _scheduleTaskNotifications(task);
+    log("TaskService started and updateTask called for task id: ${task.id}");
+    try {
+      await taskCollection.doc(task.id).update(task.toMap());
+      log('Task updated successfully');
+      await _scheduleTaskNotifications(task);
+    } catch (e) {
+      log('Error updating task: $e');
+    }
   }
 
   Future<void> deleteTask(String id) async {
-    await taskCollection.doc(id).delete();
+    try {
+      await taskCollection.doc(id).delete();
+      log('Task deleted successfully');
+    } catch (e) {
+      log('Error deleting task: $e');
+    }
+  }
+
+  Future<void> deleteTasksForDeletedUsers() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final users = await FirebaseFirestore.instance.collection('users').get();
+        final userIds = users.docs.map((doc) => doc.id).toSet();
+
+        final tasks = await taskCollection.get();
+        for (var task in tasks.docs) {
+          final taskData = task.data();
+          if (taskData is Map<String, dynamic>) {
+            if (!userIds.contains(taskData['userId'])) {
+              await task.reference.delete();
+              log('Deleted task for user that no longer exists: ${task.id}');
+            }
+          }
+        }
+      } catch (e) {
+        log('Error deleting tasks for deleted users: $e');
+      }
+    } else {
+      throw Exception("User not authenticated");
+    }
   }
 
   Stream<List<Task>> getTasks() {
@@ -36,9 +76,10 @@ class TaskService {
           .where('userId', isEqualTo: user.uid)
           .orderBy('startDate', descending: true)
           .snapshots()
-          .map((snapshot) => snapshot.docs
-          .map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>))
-          .toList());
+          .map((snapshot) {
+        log('Fetched tasks for user: ${user.uid}');
+        return snapshot.docs.map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>)).toList();
+      });
     } else {
       throw Exception("User not authenticated");
     }

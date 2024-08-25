@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/foundation.dart';
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -24,23 +25,29 @@ class NotificationService {
   }
 
   Future<void> _requestPermissions() async {
-    var status = await Permission.notification.status;
-    if (!status.isGranted) {
-      status = await Permission.notification.request();
-    }
-    if (!status.isGranted) {
-      throw Exception('Notification permissions not granted');
-    }
-
-    // Demande de permissions d'alarme exacte uniquement pour Android 12 (API 31) et versions ultérieures
-    if (Platform.isAndroid && (await Permission.scheduleExactAlarm.status.isDenied)) {
-      var alarmStatus = await Permission.scheduleExactAlarm.request();
-      if (!alarmStatus.isGranted) {
-        throw Exception('Exact alarm permissions not granted');
+    if (Platform.isAndroid) {
+      // Notification permissions
+      var status = await Permission.notification.status;
+      if (!status.isGranted) {
+        status = await Permission.notification.request();
+        if (!status.isGranted) {
+          throw Exception('Notification permissions not granted');
+        }
       }
-    }
 
-    print("Notification permissions requested and granted");
+      // Exact alarm permissions for Android 12+
+      if (defaultTargetPlatform == TargetPlatform.android && Platform.version.startsWith("12") || Platform.version.startsWith("13")) {
+        var alarmStatus = await Permission.scheduleExactAlarm.status;
+        if (!alarmStatus.isGranted) {
+          alarmStatus = await Permission.scheduleExactAlarm.request();
+          if (!alarmStatus.isGranted) {
+            throw Exception('Exact alarm permissions not granted');
+          }
+        }
+      }
+
+      print("Notification permissions requested and granted");
+    }
   }
 
   Future<void> showNotification({
