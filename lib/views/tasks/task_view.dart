@@ -88,15 +88,15 @@ class _TaskViewState extends State<TaskView> {
         // Plannification des notifications avec notificationsService
         await notificationService.scheduleNotification(
           id: task.id.hashCode,
-          title: 'Tâche ${task.title} à démarrer',
-          body: "La tâche \"${task.title}\" doit commencer bientôt (${task.startDate})",
+          title: '${task.title} à démarrer',
+          body: "\"${task.title}\" doit commencer bientôt (${task.startDate})",
           scheduledDate: task.startDate,
         );
 
         await notificationService.scheduleNotification(
           id: task.id.hashCode + 1,
           title: '${task.title} à venir',
-          body: "La tâche \"${task.title}\" va commencer dans 10 minutes.",
+          body: "\"${task.title}\" commence dans 10 minutes.",
           scheduledDate: task.startDate.subtract(const Duration(minutes: 10)),
         );
 
