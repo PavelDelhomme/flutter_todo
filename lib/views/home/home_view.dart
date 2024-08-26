@@ -59,12 +59,10 @@ class _HomeViewState extends State<HomeView> {
       );
     });
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const HomeAppBar(),
-      drawer: DrawerMenu(onSignOut: _signOut),
       body: StreamBuilder<List<Task>>(
         stream: taskService.getTasks(),
         builder: (context, snapshot) {
@@ -72,16 +70,12 @@ class _HomeViewState extends State<HomeView> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            log("home_view : snapshot.hasError : Error: ${snapshot.error}");
-            return Center(child: Text("Erreur: ${snapshot.error}"));
+            log("Error fetching tasks: ${snapshot.error}");
+            return Center(child: Text("Erreur lors de la récupération des tâches"));
           }
           final tasks = snapshot.data ?? [];
-          log("home_view : tasks content = $tasks");
           if (tasks.isEmpty) {
-            log("home_view : tasks empty");
-            return const Center(
-              child: Text("Pas encore de tâches"),
-            );
+            return const Center(child: Text("Pas encore de tâches"));
           }
           return ListView.builder(
             itemCount: tasks.length,

@@ -40,7 +40,7 @@ class _TaskFormState extends State<TaskForm> {
   void initState() {
     super.initState();
     startDate = widget.initialStartDate ?? DateTime.now();
-    endDate = widget.initialEndDate ?? DateTime.now().add(const Duration(hours: 1));
+    endDate = widget.initialStartDate ?? DateTime.now().add(const Duration(hours: 1));
     priorityLevel = widget.initialPriorityLevel;
   }
 

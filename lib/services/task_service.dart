@@ -8,30 +8,39 @@ class TaskService {
   final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
 
   Future<void> addTask(Task task) async {
+    try {
+      await taskCollection.doc(task.id).set(task.toMap());
+
+    } catch (e) {
+      throw Exception('Failed to add task: $e');
+    }
+    /*
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       task.userId = user.uid;
-      log('Adding task for user: ${user.uid} with data: ${task.toMap()}');
+      log('Attempting to add task for user: ${user.uid} with data: ${task.toMap()}');
       try {
         await taskCollection.doc(task.id).set(task.toMap());
-        log('Task added successfully');
-        await _scheduleTaskNotifications(task);
+        log('Task added successfully for user: ${user.uid}');
+        //await _scheduleTaskNotifications(task);
       } catch (e) {
         log('Error adding task: $e');
       }
     } else {
       throw Exception("User not authenticated");
-    }
+    }*/
   }
 
   Future<void> updateTask(Task task) async {
-    log("TaskService started and updateTask called for task id: ${task.id}");
     try {
       await taskCollection.doc(task.id).update(task.toMap());
+      /*
+      await taskCollection.doc(task.id).update(task.toMap());
       log('Task updated successfully');
-      await _scheduleTaskNotifications(task);
+      await _scheduleTaskNotifications(task);*/
     } catch (e) {
       log('Error updating task: $e');
+      throw Exception("Failed to update task: $e");
     }
   }
 
@@ -68,7 +77,6 @@ class TaskService {
       throw Exception("User not authenticated");
     }
   }
-
   Stream<List<Task>> getTasks() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -77,11 +85,10 @@ class TaskService {
           .orderBy('startDate', descending: true)
           .snapshots()
           .map((snapshot) {
-        log('Fetched tasks for user: ${user.uid}');
         return snapshot.docs.map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>)).toList();
       });
     } else {
-      throw Exception("User not authenticated");
+      return Stream.value([]); // Stream vide si non authentifié
     }
   }
 

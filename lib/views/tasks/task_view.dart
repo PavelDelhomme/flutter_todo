@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:todo_firebase/views/tasks/components/task_app_bar.dart';
@@ -57,49 +59,40 @@ class _TaskViewState extends State<TaskView> {
   }
 
   void _saveTask() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) {
+      _showErrorDialog('Error', 'You must be logged in to save tasks.');
+      return;
+    }
+
     if (widget.taskControllerForTitle.text.isNotEmpty &&
         widget.taskControllerForSubtitle.text.isNotEmpty) {
       try {
+        Task task = widget.task ?? Task(
+          title: widget.taskControllerForTitle.text,
+          subtitle: widget.taskControllerForSubtitle.text,
+          startDate: startDate ?? DateTime.now(),
+          endDate: endDate ?? DateTime.now().add(const Duration(hours: 1)),
+          priorityLevel: priorityLevel,
+          userId: userId,  // Le bon userId
+        );
+
         if (widget.task != null) {
-          widget.task?.title = widget.taskControllerForTitle.text;
-          widget.task?.subtitle = widget.taskControllerForSubtitle.text;
-          widget.task?.startDate = startDate ?? widget.task!.startDate;
-          widget.task?.endDate = endDate ?? widget.task!.endDate;
-          widget.task?.priorityLevel = priorityLevel;
-          widget.task?.userId = FirebaseAuth.instance.currentUser!.uid;
-          await taskService.updateTask(widget.task!);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Tâche mise à jour avec succès.")),
-            );
-          }
+          await taskService.updateTask(task);
         } else {
-          var task = Task.create(
-            title: widget.taskControllerForTitle.text,
-            subtitle: widget.taskControllerForSubtitle.text,
-            startDate: startDate ?? DateTime.now(),
-            endDate: endDate ?? DateTime.now().add(const Duration(hours: 1)),
-            priorityLevel: priorityLevel,
-            userId: FirebaseAuth.instance.currentUser!.uid,
-          );
           await taskService.addTask(task);
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Tâche ajoutée avec succès.')),
-            );
-          }
+          log("Adding task for user: $userId with data: ${task.toMap()}");
         }
 
-        if (mounted) {
-          Navigator.of(context).pop();
-        }
-      } catch (error) {
-        _showErrorDialog('Error', 'Une erreur est survenue pendant l\'enregistrement de la tâche.');
+        Navigator.of(context).pop();
+      } catch (e) {
+        _showErrorDialog('Error', 'An error occurred: $e');
       }
     } else {
-      _showErrorDialog('Oops', 'Veuillez remplir tous les champs.');
+      _showErrorDialog('Invalid Input', 'Please complete all fields.');
     }
   }
+
 
   void _showErrorDialog(String title, String message) {
     showDialog(
@@ -109,9 +102,7 @@ class _TaskViewState extends State<TaskView> {
         content: Text(message),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-            },
+            onPressed: () => Navigator.of(ctx).pop(),
             child: const Text('OK'),
           ),
         ],
@@ -119,46 +110,32 @@ class _TaskViewState extends State<TaskView> {
     );
   }
 
-  dynamic deleteTask() {
-    widget.task?.delete();
-    Navigator.of(context).pop();
+  dynamic deleteTask() async {
+    if (widget.task != null) {
+      await taskService.deleteTask(widget.task!.id);
+      Navigator.of(context).pop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        appBar: TaskAppBar(isTaskAlreadyExist: widget.task != null),
-        body: SizedBox(
-          width: double.infinity,
-          height: double.infinity,
-          child: Center(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  TaskForm(
-                    taskControllerForTitle: widget.taskControllerForTitle,
-                    taskControllerForSubtitle: widget.taskControllerForSubtitle,
-                    initialStartDate: startDate,
-                    initialEndDate: endDate,
-                    initialPriorityLevel: priorityLevel,
-                    onStartDateSelected: _onStartDateSelected,
-                    onEndDateSelected: _onEndDateSelected,
-                    onPrioritySelected: _onPrioritySelected,
-                  ),
-                  ElevatedButton(
-                    onPressed: _saveTask,
-                    child: const Text("Sauvegarder"),
-                  )
-                ],
-              ),
-            ),
-          ),
+    return Scaffold(
+      appBar: AppBar(title: const Text('Edit Task')),
+      body: SingleChildScrollView(
+        child: TaskForm(
+          taskControllerForTitle: widget.taskControllerForTitle,
+          taskControllerForSubtitle: widget.taskControllerForSubtitle,
+          initialStartDate: startDate,
+          initialEndDate: endDate,
+          initialPriorityLevel: priorityLevel,
+          onStartDateSelected: _onStartDateSelected,
+          onEndDateSelected: _onEndDateSelected,
+          onPrioritySelected: _onPrioritySelected,
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _saveTask,
+        child: const Icon(Icons.save),
       ),
     );
   }

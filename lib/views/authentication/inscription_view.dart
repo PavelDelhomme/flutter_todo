@@ -3,6 +3,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:todo_firebase/models/task.dart';
+import 'package:todo_firebase/services/task_service.dart';
 import '../home/home_view.dart';
 
 class InscriptionView extends StatefulWidget {
@@ -19,7 +21,6 @@ class _InscriptionViewState extends State<InscriptionView> {
   final _db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
   bool _isLoading = false;
-
   Future<void> _signUp() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() {
@@ -37,9 +38,16 @@ class _InscriptionViewState extends State<InscriptionView> {
           'createdAt': Timestamp.now(),
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Inscription réussie et connexion établie")),
+        // Create initial task for the user
+        Task initialTask = Task(
+          title: 'Welcome Task',
+          subtitle: 'This is your first task',
+          startDate: DateTime.now(),
+          endDate: DateTime.now().add(const Duration(hours: 1)),
+          userId: userCredential.user!.uid,
         );
+
+        await taskService.addTask(initialTask);
 
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),
@@ -54,7 +62,6 @@ class _InscriptionViewState extends State<InscriptionView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage)),
         );
-        log("Error : ${e.message}");
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Échec de l\'inscription : $e')),

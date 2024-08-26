@@ -13,23 +13,17 @@ import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   await Hive.initFlutter();
   Hive.registerAdapter(TaskAdapter());
   await Hive.openBox<Task>('tasks');
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
 
   try {
     await notificationService.initialize();
   } catch (e) {
     print('Error initializing notification service: $e');
-  }
-
-  User? user = FirebaseAuth.instance.currentUser;
-  if (user != null) {
-    await taskService.deleteTasksForDeletedUsers(); // Nettoyer les tâches des utilisateurs supprimés
   }
 
   runApp(const MainApp());
