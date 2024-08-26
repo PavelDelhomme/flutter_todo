@@ -14,30 +14,11 @@ class TaskService {
     } catch (e) {
       throw Exception('Failed to add task: $e');
     }
-    /*
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      task.userId = user.uid;
-      log('Attempting to add task for user: ${user.uid} with data: ${task.toMap()}');
-      try {
-        await taskCollection.doc(task.id).set(task.toMap());
-        log('Task added successfully for user: ${user.uid}');
-        //await _scheduleTaskNotifications(task);
-      } catch (e) {
-        log('Error adding task: $e');
-      }
-    } else {
-      throw Exception("User not authenticated");
-    }*/
   }
 
   Future<void> updateTask(Task task) async {
     try {
       await taskCollection.doc(task.id).update(task.toMap());
-      /*
-      await taskCollection.doc(task.id).update(task.toMap());
-      log('Task updated successfully');
-      await _scheduleTaskNotifications(task);*/
     } catch (e) {
       log('Error updating task: $e');
       throw Exception("Failed to update task: $e");

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_firebase/models/task.dart';
 import 'package:todo_firebase/utils/custom_colors.dart';
-import 'package:todo_firebase/views/tasks/widgets/task_detail_view.dart';
+import 'package:todo_firebase/views/tasks/widgets/task_details/task_detail_view.dart';
 
 class TaskWidget extends StatelessWidget {
   final Task task;
