@@ -8,12 +8,14 @@ class TaskWidget extends StatelessWidget {
   final Task task;
   final VoidCallback onDismissed;
   final VoidCallback onMarkedComplete;
+  final List<Task> tasks;
 
   const TaskWidget({
     super.key,
     required this.task,
     required this.onDismissed,
     required this.onMarkedComplete,
+    required this.tasks,
   });
 
   String formatDateTime(DateTime? dateTime) {
@@ -35,10 +37,12 @@ class TaskWidget extends StatelessWidget {
         key: Key(task.id),
         background: Container(color: Colors.red),
         onDismissed: (direction) {
-          if (direction == DismissDirection.startToEnd) {
-            onMarkedComplete();
-          } else {
+          if (direction == DismissDirection.endToStart) {
+            // Supprime la tâche de la liste ici
+            tasks.removeWhere((element) => element.id == task.id);
             onDismissed();
+          } else if (direction == DismissDirection.startToEnd) {
+            onMarkedComplete();
           }
         },
         child: Container(

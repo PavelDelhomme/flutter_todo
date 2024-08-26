@@ -19,6 +19,7 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  List<Task> tasks = []; // Stockez les tâches ici
 
   void _signOut() async {
     await _auth.signOut();
@@ -37,13 +38,15 @@ class _HomeViewState extends State<HomeView> {
         ),
       ),
     ).then((value) {
-      setState(() {});
+      setState(() {}); // Actualise l'interface après l'ajout de la tâche
     });
   }
 
   void _deleteTask(Task task) {
     taskService.deleteTask(task.id).then((_) {
-      setState(() {}); // Refresh the UI
+      setState(() {
+        tasks.removeWhere((element) => element.id == task.id); // Supprime la tâche localement
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tâche supprimée avec succès')),
       );
@@ -53,12 +56,13 @@ class _HomeViewState extends State<HomeView> {
   void _markTaskComplete(Task task) {
     task.isCompleted = !task.isCompleted;
     taskService.updateTask(task).then((_) {
-      setState(() {}); // Refresh the UI
+      setState(() {}); // Actualise l'interface après la mise à jour du statut de la tâche
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Statut de la tâche mis à jour')),
       );
     });
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,9 +75,9 @@ class _HomeViewState extends State<HomeView> {
           }
           if (snapshot.hasError) {
             log("Error fetching tasks: ${snapshot.error}");
-            return Center(child: Text("Erreur lors de la récupération des tâches"));
+            return const Center(child: Text("Erreur lors de la récupération des tâches"));
           }
-          final tasks = snapshot.data ?? [];
+          tasks = snapshot.data ?? [];
           if (tasks.isEmpty) {
             return const Center(child: Text("Pas encore de tâches"));
           }
@@ -83,6 +87,7 @@ class _HomeViewState extends State<HomeView> {
               final task = tasks[index];
               return TaskWidget(
                 task: task,
+                tasks: tasks, // Passe la liste des tâches à TaskWidget
                 onDismissed: () => _deleteTask(task),
                 onMarkedComplete: () => _markTaskComplete(task),
               );
