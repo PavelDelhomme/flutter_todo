@@ -4,30 +4,14 @@ import 'package:uuid/uuid.dart';
 
 part 'task.g.dart';
 
-@HiveType(typeId: 0)
-class Task extends HiveObject {
-  @HiveField(0)
+class Task {
   String id;
-
-  @HiveField(1)
   String title;
-
-  @HiveField(2)
   String subtitle;
-
-  @HiveField(3)
   bool isCompleted;
-
-  @HiveField(4)
   DateTime startDate;
-
-  @HiveField(5)
   DateTime endDate;
-
-  @HiveField(6)
   String priorityLevel;
-
-  @HiveField(7)
   String userId;
 
   Task({
@@ -40,32 +24,6 @@ class Task extends HiveObject {
     this.priorityLevel = 'Neutre',
     required this.userId,
   }) : id = id ?? const Uuid().v4();
-
-  static Task create({
-    required String title,
-    required String subtitle,
-    required DateTime startDate,
-    required DateTime endDate,
-    String priorityLevel = 'Neutre',
-    required String userId,
-  }) {
-    return Task(
-      title: title,
-      subtitle: subtitle,
-      startDate: startDate,
-      endDate: endDate,
-      priorityLevel: priorityLevel,
-      userId: userId,
-    );
-  }
-
-  void saveTask() {
-    save();
-  }
-
-  void deleteTask() {
-    delete();
-  }
 
   Map<String, dynamic> toMap() {
     return {
