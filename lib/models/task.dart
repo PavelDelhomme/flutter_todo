@@ -73,8 +73,8 @@ class Task extends HiveObject {
       'title': title,
       'subtitle': subtitle,
       'isCompleted': isCompleted,
-      'startDate': startDate,
-      'endDate': endDate,
+      'startDate': Timestamp.fromDate(startDate),
+      'endDate': Timestamp.fromDate(endDate),
       'priorityLevel': priorityLevel,
       'userId': userId,
     };
