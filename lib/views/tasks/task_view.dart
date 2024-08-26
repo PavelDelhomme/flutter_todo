@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:todo_firebase/services/notification_service.dart';
 import 'package:todo_firebase/views/tasks/components/task_app_bar.dart';
 import 'package:todo_firebase/models/task.dart';
 import '../../services/task_service.dart';
@@ -74,7 +75,7 @@ class _TaskViewState extends State<TaskView> {
           startDate: startDate ?? DateTime.now(),
           endDate: endDate ?? DateTime.now().add(const Duration(hours: 1)),
           priorityLevel: priorityLevel,
-          userId: userId,  // Le bon userId
+          userId: userId,
         );
 
         if (widget.task != null) {
@@ -83,6 +84,21 @@ class _TaskViewState extends State<TaskView> {
           await taskService.addTask(task);
           log("Adding task for user: $userId with data: ${task.toMap()}");
         }
+
+        // Plannification des notifications avec notificationsService
+        await notificationService.scheduleNotification(
+          id: task.id.hashCode,
+          title: 'Tâche ${task.title} à démarrer',
+          body: "La tâche \"${task.title}\" doit commencer bientôt (${task.startDate})",
+          scheduledDate: task.startDate,
+        );
+
+        await notificationService.scheduleNotification(
+          id: task.id.hashCode + 1,
+          title: '${task.title} à venir',
+          body: "La tâche \"${task.title}\" va commencer dans 10 minutes.",
+          scheduledDate: task.startDate.subtract(const Duration(minutes: 10)),
+        );
 
         Navigator.of(context).pop();
       } catch (e) {
