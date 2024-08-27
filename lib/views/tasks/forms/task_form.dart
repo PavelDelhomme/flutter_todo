@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_datetime_picker_bdaya/flutter_datetime_picker_bdaya.dart';
-import 'tf_subtitle.dart';
-import 'tf_title.dart';
-import 'tf_priority.dart';
 
 class TaskForm extends StatefulWidget {
   final TextEditingController taskControllerForTitle;
@@ -40,12 +37,34 @@ class _TaskFormState extends State<TaskForm> {
   void initState() {
     super.initState();
     startDate = widget.initialStartDate ?? DateTime.now();
-    endDate = widget.initialStartDate ?? DateTime.now().add(const Duration(hours: 1));
+    endDate = widget.initialEndDate ?? startDate!.add(const Duration(hours: 1));
     priorityLevel = widget.initialPriorityLevel;
   }
 
   String formatDateTime(DateTime? date) {
     return DateFormat('yyyy-MM-dd – HH:mm').format(date ?? DateTime.now());
+  }
+
+  void _onStartDateSelected(DateTime selectedDate) {
+    setState(() {
+      startDate = selectedDate;
+      endDate = selectedDate.add(const Duration(hours: 1));
+    });
+    widget.onStartDateSelected(selectedDate);
+    widget.onEndDateSelected(endDate!);
+  }
+
+  void _onEndDateSelected(DateTime selectedDate) {
+    if (selectedDate.isAfter(startDate!)) {
+      setState(() {
+        endDate = selectedDate;
+      });
+      widget.onEndDateSelected(selectedDate);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('La date de fin doit être après la date de début.')),
+      );
+    }
   }
 
   @override
@@ -54,22 +73,76 @@ class _TaskFormState extends State<TaskForm> {
 
     return SizedBox(
       width: double.infinity,
-      height: 500, // Adjust the height accordingly
+      height: 500, // Adjust height as necessary
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TaskFieldTitle(controller: widget.taskControllerForTitle),
-          const SizedBox(height: 10),
-          TaskFieldSubtitle(controller: widget.taskControllerForSubtitle),
-          TaskFieldPriority(
-            priorityLevel: priorityLevel,
-            onPrioritySelected: (selectedPriority) {
-              setState(() {
-                priorityLevel = selectedPriority!;
-              });
-              widget.onPrioritySelected(selectedPriority);
-            },
+          // Title field
+          Container(
+            width: MediaQuery.of(context).size.width,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            child: ListTile(
+              title: TextFormField(
+                controller: widget.taskControllerForTitle,
+                style: const TextStyle(color: Colors.black),
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.title, color: Colors.grey),
+                  border: InputBorder.none,
+                  hintText: 'Titre de la tâche',
+                ),
+                onFieldSubmitted: (value) {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                },
+              ),
+            ),
           ),
+          const SizedBox(height: 10),
+          // Subtitle field
+          Container(
+            width: MediaQuery.of(context).size.width,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            child: ListTile(
+              title: TextFormField(
+                controller: widget.taskControllerForSubtitle,
+                style: const TextStyle(color: Colors.black),
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.bookmark_border, color: Colors.grey),
+                  border: InputBorder.none,
+                  hintText: 'Ajouter une note',
+                ),
+                onFieldSubmitted: (value) {
+                  FocusManager.instance.primaryFocus?.unfocus();
+                },
+              ),
+            ),
+          ),
+          // Priority dropdown
+          Container(
+            width: MediaQuery.of(context).size.width,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                const Icon(Icons.flag, color: Colors.grey),
+                const SizedBox(width: 10),
+                DropdownButton<String>(
+                  value: priorityLevel,
+                  items: ['Urgente', 'Neutre'].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  onChanged: (selectedPriority) {
+                    setState(() {
+                      priorityLevel = selectedPriority!;
+                    });
+                    widget.onPrioritySelected(selectedPriority);
+                  },
+                ),
+              ],
+            ),
+          ),
+          // Start date picker
           GestureDetector(
             onTap: () {
               DatePickerBdaya.showDateTimePicker(
@@ -78,14 +151,9 @@ class _TaskFormState extends State<TaskForm> {
                 minTime: DateTime(2000, 1, 1),
                 maxTime: DateTime(2101, 12, 31),
                 onChanged: (_) {},
-                onConfirm: (selectedDate) {
-                  setState(() {
-                    startDate = selectedDate;
-                  });
-                  widget.onStartDateSelected(selectedDate);
-                },
+                onConfirm: _onStartDateSelected,
                 currentTime: startDate,
-                locale: LocaleType.en,
+                locale: LocaleType.fr,
               );
             },
             child: Container(
@@ -98,29 +166,25 @@ class _TaskFormState extends State<TaskForm> {
               ),
               child: Row(
                 children: [
-                  Text('Start Date: ', style: textTheme.titleMedium),
+                  Text('Date de début : ', style: textTheme.titleMedium),
                   Expanded(child: Container()),
                   Text(formatDateTime(startDate), style: textTheme.bodyLarge),
                 ],
               ),
             ),
           ),
+          // End date picker
           GestureDetector(
             onTap: () {
               DatePickerBdaya.showDateTimePicker(
                 context,
                 showTitleActions: true,
-                minTime: DateTime(2000, 1, 1),
+                minTime: startDate, // Ensure end date is after start date
                 maxTime: DateTime(2101, 12, 31),
                 onChanged: (_) {},
-                onConfirm: (selectedDate) {
-                  setState(() {
-                    endDate = selectedDate;
-                  });
-                  widget.onEndDateSelected(selectedDate);
-                },
+                onConfirm: _onEndDateSelected,
                 currentTime: endDate,
-                locale: LocaleType.en,
+                locale: LocaleType.fr,
               );
             },
             child: Container(
@@ -133,7 +197,7 @@ class _TaskFormState extends State<TaskForm> {
               ),
               child: Row(
                 children: [
-                  Text('End Date: ', style: textTheme.titleMedium),
+                  Text('Date de fin : ', style: textTheme.titleMedium),
                   Expanded(child: Container()),
                   Text(formatDateTime(endDate), style: textTheme.bodyLarge),
                 ],
