@@ -18,12 +18,24 @@ class TaskWidget extends StatelessWidget {
     required this.tasks,
   });
 
+  // Helper to format date
   String formatDateTime(DateTime? dateTime) {
     return dateTime != null ? DateFormat('yyyy-MM-dd – HH:mm').format(dateTime) : 'No reminder set';
   }
+
+  // Helper to determine task status color
+  Color _getTaskColor() {
+    if (task.isCompleted) {
+      return Colors.green.withOpacity(0.6); // Completed tasks
+    } else if (task.endDate.isBefore(DateTime.now())) {
+      return Colors.red.withOpacity(0.6); // Overdue tasks
+    } else {
+      return Colors.yellow.withOpacity(0.6); // Ongoing tasks
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isExpired = task.endDate.isBefore(DateTime.now());
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -38,7 +50,6 @@ class TaskWidget extends StatelessWidget {
         background: Container(color: Colors.red),
         onDismissed: (direction) {
           if (direction == DismissDirection.endToStart) {
-            // Supprime la tâche de la liste ici
             tasks.removeWhere((element) => element.id == task.id);
             onDismissed();
           } else if (direction == DismissDirection.startToEnd) {
@@ -48,11 +59,7 @@ class TaskWidget extends StatelessWidget {
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: task.isCompleted
-                ? Colors.grey.shade200
-                : isExpired
-                ? Colors.red.withOpacity(0.6)
-                : Colors.white,
+            color: _getTaskColor(),
             borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
@@ -67,7 +74,7 @@ class TaskWidget extends StatelessWidget {
               onTap: onMarkedComplete,
               child: Container(
                 decoration: BoxDecoration(
-                  color: task.isCompleted ? CustomColors.primaryColor : Colors.grey,
+                  color: task.isCompleted ? Colors.green : Colors.grey,
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 0.8),
                 ),
@@ -92,12 +99,11 @@ class TaskWidget extends StatelessWidget {
                 Text(
                   task.subtitle,
                   style: TextStyle(
-                    color: task.isCompleted ? Colors.grey : const Color.fromRGBO(0, 0, 0, 1),
+                    color: task.isCompleted ? Colors.grey : Colors.black,
                     fontWeight: FontWeight.w300,
                     decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                    fontStyle: task.isCompleted ? FontStyle.italic : FontStyle.normal,
                   ),
-                ), // Subtitle texte
+                ),
                 Align(
                   alignment: Alignment.centerRight,
                   child: Padding(
@@ -108,11 +114,11 @@ class TaskWidget extends StatelessWidget {
                         Text(
                           'Début : ${formatDateTime(task.startDate)}',
                           style: TextStyle(fontSize: 13, color: task.isCompleted ? Colors.grey : Colors.black54),
-                        ), // EndDate
+                        ),
                         Text(
                           'Fin : ${formatDateTime(task.endDate)}',
                           style: TextStyle(fontSize: 12, color: task.isCompleted ? Colors.grey : Colors.black54),
-                        ), // EndDate
+                        ),
                       ],
                     ),
                   ),

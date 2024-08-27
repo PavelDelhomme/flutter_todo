@@ -76,13 +76,13 @@ class _TaskViewState extends State<TaskView> {
           endDate: endDate ?? DateTime.now().add(const Duration(hours: 1)),
           priorityLevel: priorityLevel,
           userId: userId,
+          isCompleted: widget.task?.isCompleted ?? false,
         );
 
         if (widget.task != null) {
           await taskService.updateTask(task);
         } else {
           await taskService.addTask(task);
-          log("Adding task for user: $userId with data: ${task.toMap()}");
         }
 
         // Plannification des notifications avec notificationsService
