@@ -10,6 +10,8 @@ import 'package:todo_firebase/views/home/components/fab.dart';
 import 'package:todo_firebase/views/home/components/app_bar.dart';
 import 'package:todo_firebase/views/tasks/widgets/task_widget.dart';
 
+import '../../services/notification_service.dart';
+
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
 
@@ -41,27 +43,38 @@ class _HomeViewState extends State<HomeView> {
       setState(() {}); // Actualise l'interface après l'ajout de la tâche
     });
   }
+  void _markTaskComplete(Task task) {
+    setState(() {
+      task.isCompleted = !task.isCompleted;
+    });
+
+    taskService.updateTask(task).then((_) {
+      // Annule les notifications liées à cette tâche
+      notificationService.cancelNotification(task.id.hashCode);
+      notificationService.cancelNotification(task.id.hashCode + 1); // Pour la notification de rappel
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Statut de la tâche mis à jour')),
+      );
+    });
+  }
 
   void _deleteTask(Task task) {
     taskService.deleteTask(task.id).then((_) {
       setState(() {
         tasks.removeWhere((element) => element.id == task.id); // Supprime la tâche localement
       });
+
+      // Annule les notifications liées à cette tâche
+      notificationService.cancelNotification(task.id.hashCode);
+      notificationService.cancelNotification(task.id.hashCode + 1); // Pour la notification de rappel
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tâche supprimée avec succès')),
       );
     });
   }
 
-  void _markTaskComplete(Task task) {
-    task.isCompleted = !task.isCompleted;
-    taskService.updateTask(task).then((_) {
-      setState(() {}); // Actualise l'interface après la mise à jour du statut de la tâche
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Statut de la tâche mis à jour')),
-      );
-    });
-  }
 
   @override
   Widget build(BuildContext context) {

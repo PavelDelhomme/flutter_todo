@@ -134,6 +134,12 @@ class NotificationService {
       print("Error scheduling missed task notification: $error");
     });
   }
+
+  Future<void> cancelNotification(int id) async {
+    await _flutterLocalNotificationsPlugin.cancel(id);
+    print("Notification with id: $id canceled.");
+  }
+
 }
 
 final NotificationService notificationService = NotificationService();
