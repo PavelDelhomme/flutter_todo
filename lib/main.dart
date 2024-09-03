@@ -10,9 +10,12 @@ import 'package:todo_firebase/views/home/home_view.dart';
 import 'firebase_options.dart';
 import 'views/authentication/auth_wrapper.dart';
 import 'services/notification_service.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await Hive.initFlutter();

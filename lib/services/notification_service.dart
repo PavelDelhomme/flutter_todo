@@ -2,11 +2,11 @@ import 'dart:developer';
 import 'dart:io' show Platform;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter/foundation.dart';
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -22,13 +22,15 @@ class NotificationService {
   Future<void> initialize() async {
     await _flutterLocalNotificationsPlugin.initialize(initializationSettings);
     tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Europe/Paris')); // Utiliser une timezone en dur
+    log("NotificationService initialized");
+
     await _requestPermissions();
-    print("NotificationService initialized");
   }
+
 
   Future<void> _requestPermissions() async {
     if (Platform.isAndroid) {
-      // Notification permissions
       var status = await Permission.notification.status;
       if (!status.isGranted) {
         status = await Permission.notification.request();
@@ -37,8 +39,8 @@ class NotificationService {
         }
       }
 
-      // Exact alarm permissions for Android 12+
-      if (defaultTargetPlatform == TargetPlatform.android && Platform.version.startsWith("12") || Platform.version.startsWith("13")) {
+      // Permissions exact alarm pour Android 12+
+      if (defaultTargetPlatform == TargetPlatform.android && (Platform.version.startsWith("12") || Platform.version.startsWith("13"))) {
         var alarmStatus = await Permission.scheduleExactAlarm.status;
         if (!alarmStatus.isGranted) {
           alarmStatus = await Permission.scheduleExactAlarm.request();
@@ -48,9 +50,15 @@ class NotificationService {
         }
       }
 
-      print("Notification permissions requested and granted");
+      log("Notification permissions requested and granted");
     }
   }
+
+  Future<void> cancelNotification(int id) async {
+    await _flutterLocalNotificationsPlugin.cancel(id);
+    log("Notification with id $id canceled");
+  }
+
 
   Future<Map<String, dynamic>> _getUserNotificationSettings() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -62,7 +70,7 @@ class NotificationService {
     }
     return {
       'reminderEnabled': false,
-      'reminderTime': 10,
+      'reminderTime': 10, // Valeur par défaut si les paramètres n'existent pas
     };
   }
 
@@ -73,15 +81,14 @@ class NotificationService {
     required DateTime taskDate,
   }) async {
     final userSettings = await _getUserNotificationSettings();
-    log("NotificationService: userSettings: ${userSettings}");
     if (userSettings['reminderEnabled'] == true) {
       final reminderTime = userSettings['reminderTime'] as int;
-      log("NotificationService: reminderTime: ${reminderTime}");
       final reminderDate = taskDate.subtract(Duration(minutes: reminderTime));
+
+      final scheduledTZDateTime = tz.TZDateTime.from(reminderDate, tz.local);
 
       log("Scheduling notification: $title at $reminderDate");
 
-      final scheduledTZDateTime = tz.TZDateTime.from(reminderDate, tz.local);
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         id,
         title,

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
@@ -40,14 +41,15 @@ class Task {
 
   static Task fromMap(Map<String, dynamic> map) {
     return Task(
-      id: map['id'],
-      title: map['title'],
-      subtitle: map['subtitle'],
-      isCompleted: map['isCompleted'],
-      startDate: (map['startDate'] as Timestamp).toDate(),
-      endDate: (map['endDate'] as Timestamp).toDate(),
-      priorityLevel: map['priorityLevel'],
-      userId: map['userId'],
+      id: map['id'] ?? const Uuid().v4(),
+      title: map['title'] ?? '',  // Provide a default value to avoid null errors
+      subtitle: map['subtitle'] ?? '',
+      isCompleted: map['isCompleted'] ?? false,
+      startDate: (map['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(), // Use the current date if null
+      endDate: (map['endDate'] as Timestamp?)?.toDate() ?? DateTime.now().add(Duration(hours: 1)),
+      priorityLevel: map['priorityLevel'] ?? 'Neutre',
+      userId: map['userId'] ?? FirebaseAuth.instance.currentUser!.uid,
     );
   }
+
 }

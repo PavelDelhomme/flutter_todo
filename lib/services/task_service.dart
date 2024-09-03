@@ -11,6 +11,7 @@ class TaskService {
     try {
       await taskCollection.doc(task.id).set(task.toMap());
 
+      // Planifier la notification
       await notificationService.scheduleNotificationForTask(
         id: task.id.hashCode,
         title: "Rappel : ${task.title}",
@@ -24,25 +25,32 @@ class TaskService {
 
   Future<void> updateTask(Task task) async {
     try {
+      // Annuler l'ancienne notification
+      await notificationService.cancelNotification(task.id.hashCode);
+
+      // Mettre à jour la tâche dans Firestore
       await taskCollection.doc(task.id).update(task.toMap());
-      // Planifier la notification pour la tâche mise à jour
+
+      // Reprogrammer la notification avec la nouvelle date
       await notificationService.scheduleNotificationForTask(
         id: task.id.hashCode,
         title: "Mise à jour: ${task.title}",
         body: "Votre tâche \"${task.title}\" a été mise à jour.",
         taskDate: task.startDate,
       );
-      log("notification scheduled for ${task.title}");
-      log("taskDate : ${task.startDate}");
+      log("Notification scheduled for ${task.title}");
+      log("taskDate: ${task.startDate}");
     } catch (e) {
       log('Error updating task: $e');
       throw Exception("Failed to update task: $e");
     }
   }
 
-
   Future<void> deleteTask(String id) async {
     try {
+      // Annuler la notification liée à cette tâche avant de la supprimer
+      await notificationService.cancelNotification(id.hashCode);
+
       await taskCollection.doc(id).delete();
       log('Task deleted successfully');
     } catch (e) {

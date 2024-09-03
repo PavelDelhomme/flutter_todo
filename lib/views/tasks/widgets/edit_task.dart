@@ -84,19 +84,19 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     final userId = FirebaseAuth.instance.currentUser!.uid;
 
     Map<String, dynamic> taskData = {
-      'title': title,
-      'subtitle': subtitle,
-      'notes': notes,
-      'priority': priorityLevel,
-      'startDate': Timestamp.fromDate(startDate!),
-      'endDate': Timestamp.fromDate(endDate!),
+      'title': title.isNotEmpty ? title : 'Tâche sans titre', // Default to "Tâche sans titre" if title is empty
+      'subtitle': subtitle ?? '',
+      'notes': notes ?? '',
+      'priorityLevel': priorityLevel.isNotEmpty ? priorityLevel : 'Neutre',
+      'startDate': Timestamp.fromDate(startDate ?? DateTime.now()), // Default to now if startDate is null
+      'endDate': Timestamp.fromDate(endDate ?? DateTime.now().add(Duration(hours: 1))),
       'userId': userId,
       'isCompleted': false,
     };
 
+
     try {
       if (widget.taskId.isEmpty) {
-        // Ajouter la tâche en utilisant TaskService
         final task = Task.fromMap(taskData);
         await taskService.addTask(task);
       } else {
