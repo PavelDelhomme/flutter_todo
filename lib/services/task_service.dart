@@ -32,6 +32,8 @@ class TaskService {
         body: "Votre tâche \"${task.title}\" a été mise à jour.",
         taskDate: task.startDate,
       );
+      log("notification scheduled for ${task.title}");
+      log("taskDate : ${task.startDate}");
     } catch (e) {
       log('Error updating task: $e');
       throw Exception("Failed to update task: $e");

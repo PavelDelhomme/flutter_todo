@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:todo_firebase/services/notification_service.dart';
+
+import '../../../models/task.dart';
+import '../../../services/task_service.dart';
 
 class EditTaskScreen extends StatefulWidget {
   final String taskId;
@@ -90,14 +94,27 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       'isCompleted': false,
     };
 
-    if (widget.taskId.isEmpty) {
-      await FirebaseFirestore.instance.collection('tasks').add(taskData);
-    } else {
-      await FirebaseFirestore.instance.collection('tasks').doc(widget.taskId).update(taskData);
-    }
+    try {
+      if (widget.taskId.isEmpty) {
+        // Ajouter la tâche en utilisant TaskService
+        final task = Task.fromMap(taskData);
+        await taskService.addTask(task);
+      } else {
+        final task = Task.fromMap(taskData);
+        task.id = widget.taskId;
+        await taskService.updateTask(task);
+      }
 
-    Navigator.pop(context);
+      Navigator.pop(context);
+    } catch (e) {
+      log("Erreur lors de l'ajout ou de la mise à jour de la tâche : $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur lors de l'enregistrement de la tâche : $e")),
+      );
+    }
   }
+
+
   Future<void> _selectStartDate(BuildContext context) async {
     final pickedDate = await showDatePicker(
       context: context,

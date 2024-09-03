@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,6 +35,8 @@ class _SettingsViewState extends State<SettingsView> {
           _reminderTime = doc['reminderTime'] ?? 10;
         });
       }
+      log("Settings for reminder : reminderEnabled ${_reminderEnabled}");
+      log("Settings for reminder : reminderTime ${_reminderTime}");
     }
   }
 

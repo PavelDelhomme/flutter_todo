@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io' show Platform;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -74,9 +75,10 @@ class NotificationService {
     required DateTime taskDate,
   }) async {
     final userSettings = await _getUserNotificationSettings();
-
+    log("notification_service : userSettings : ${userSettings}");
     if (userSettings['reminderEnabled'] == true) {
       final reminderTime = userSettings['reminderTime'] as int;
+      log("notification_service : reminderTime : ${reminderTime}");
       final reminderDate = taskDate.subtract(Duration(minutes: reminderTime));
 
       print("Scheduling notification: $title at $reminderDate");
@@ -99,12 +101,12 @@ class NotificationService {
         androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
-      ).then((value) => print("Notification scheduled successfully: $title at $scheduledTZDateTime"))
+      ).then((value) => log("Notification scheduled successfully: $title at $scheduledTZDateTime"))
           .catchError((error) {
-        print("Error scheduling notification: $error");
+        log("Error scheduling notification: $error");
       });
     } else {
-      print("Reminders are disabled; no notification will be scheduled.");
+      log("Reminders are disabled; no notification will be scheduled.");
     }
   }
 
@@ -127,7 +129,7 @@ class NotificationService {
       body,
       platformChannelSpecifics,
     );
-    print("Notification shown: $title - $body");
+    log("Notification shown: $title - $body");
   }
 
   Future<void> scheduleNotification({
@@ -136,10 +138,10 @@ class NotificationService {
     required String body,
     required DateTime scheduledDate,
   }) async {
-    print("Scheduling notification: $title at $scheduledDate");
+    log("Scheduling notification: $title at $scheduledDate");
 
     final scheduledTZDateTime = tz.TZDateTime.from(scheduledDate, tz.local);
-    print("Scheduled TZDateTime: $scheduledTZDateTime");
+    log("Scheduled TZDateTime: $scheduledTZDateTime");
 
     await _flutterLocalNotificationsPlugin.zonedSchedule(
       id,
@@ -158,9 +160,9 @@ class NotificationService {
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
-    ).then((value) => print("Notification scheduled successfully: $title at $scheduledDate"))
+    ).then((value) => log("Notification scheduled successfully: $title at $scheduledDate"))
         .catchError((error) {
-      print("Error scheduling notification: $error");
+      log("Error scheduling notification: $error");
     });
   }
 
@@ -187,9 +189,9 @@ class NotificationService {
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
-    ).then((value) => print("Missed task notification scheduled successfully: $title at $missedReminderDate"))
+    ).then((value) => log("Missed task notification scheduled successfully: $title at $missedReminderDate"))
         .catchError((error) {
-      print("Error scheduling missed task notification: $error");
+      log("Error scheduling missed task notification: $error");
     });
   }
 }
