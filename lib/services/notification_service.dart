@@ -12,7 +12,6 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   final AndroidInitializationSettings initializationSettingsAndroid = const AndroidInitializationSettings('@mipmap/ic_launcher');
-
   final InitializationSettings initializationSettings;
 
   NotificationService()
@@ -67,7 +66,6 @@ class NotificationService {
     };
   }
 
-
   Future<void> scheduleNotificationForTask({
     required int id,
     required String title,
@@ -75,13 +73,13 @@ class NotificationService {
     required DateTime taskDate,
   }) async {
     final userSettings = await _getUserNotificationSettings();
-    log("notification_service : userSettings : ${userSettings}");
+    log("NotificationService: userSettings: ${userSettings}");
     if (userSettings['reminderEnabled'] == true) {
       final reminderTime = userSettings['reminderTime'] as int;
-      log("notification_service : reminderTime : ${reminderTime}");
+      log("NotificationService: reminderTime: ${reminderTime}");
       final reminderDate = taskDate.subtract(Duration(minutes: reminderTime));
 
-      print("Scheduling notification: $title at $reminderDate");
+      log("Scheduling notification: $title at $reminderDate");
 
       final scheduledTZDateTime = tz.TZDateTime.from(reminderDate, tz.local);
       await _flutterLocalNotificationsPlugin.zonedSchedule(
@@ -130,69 +128,6 @@ class NotificationService {
       platformChannelSpecifics,
     );
     log("Notification shown: $title - $body");
-  }
-
-  Future<void> scheduleNotification({
-    required int id,
-    required String title,
-    required String body,
-    required DateTime scheduledDate,
-  }) async {
-    log("Scheduling notification: $title at $scheduledDate");
-
-    final scheduledTZDateTime = tz.TZDateTime.from(scheduledDate, tz.local);
-    log("Scheduled TZDateTime: $scheduledTZDateTime");
-
-    await _flutterLocalNotificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      scheduledTZDateTime,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'task_reminder',
-          'Task Reminder',
-          channelDescription: 'Reminder de tâche',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time,
-    ).then((value) => log("Notification scheduled successfully: $title at $scheduledDate"))
-        .catchError((error) {
-      log("Error scheduling notification: $error");
-    });
-  }
-
-  Future<void> scheduleMissedReminderNotification({
-    required int id,
-    required String title,
-    required String body,
-    required DateTime missedReminderDate,
-  }) async {
-    await _flutterLocalNotificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.from(missedReminderDate, tz.local),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'missed_task',
-          'Missed Task',
-          channelDescription: 'Notification for missed tasks',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time,
-    ).then((value) => log("Missed task notification scheduled successfully: $title at $missedReminderDate"))
-        .catchError((error) {
-      log("Error scheduling missed task notification: $error");
-    });
   }
 }
 
