@@ -1,4 +1,6 @@
 import 'dart:io' show Platform;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -47,6 +49,62 @@ class NotificationService {
       }
 
       print("Notification permissions requested and granted");
+    }
+  }
+
+  Future<Map<String, dynamic>> _getUserNotificationSettings() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
+      if (doc.exists) {
+        return doc.data()!;
+      }
+    }
+    return {
+      'reminderEnabled': false,
+      'reminderTime': 10,
+    };
+  }
+
+
+  Future<void> scheduleNotificationForTask({
+    required int id,
+    required String title,
+    required String body,
+    required DateTime taskDate,
+  }) async {
+    final userSettings = await _getUserNotificationSettings();
+
+    if (userSettings['reminderEnabled'] == true) {
+      final reminderTime = userSettings['reminderTime'] as int;
+      final reminderDate = taskDate.subtract(Duration(minutes: reminderTime));
+
+      print("Scheduling notification: $title at $reminderDate");
+
+      final scheduledTZDateTime = tz.TZDateTime.from(reminderDate, tz.local);
+      await _flutterLocalNotificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledTZDateTime,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'task_reminder',
+            'Task Reminder',
+            channelDescription: 'Reminder de tâche',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+        ),
+        androidAllowWhileIdle: true,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+      ).then((value) => print("Notification scheduled successfully: $title at $scheduledTZDateTime"))
+          .catchError((error) {
+        print("Error scheduling notification: $error");
+      });
+    } else {
+      print("Reminders are disabled; no notification will be scheduled.");
     }
   }
 

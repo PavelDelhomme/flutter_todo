@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:todo_firebase/models/task.dart';
 import 'package:todo_firebase/services/task_service.dart';
+import '../../models/user.dart';
 import '../home/home_view.dart';
 
 class InscriptionView extends StatefulWidget {
@@ -21,6 +22,8 @@ class _InscriptionViewState extends State<InscriptionView> {
   final _db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
   bool _isLoading = false;
+
+
   Future<void> _signUp() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() {
@@ -32,22 +35,18 @@ class _InscriptionViewState extends State<InscriptionView> {
           password: _passwordController.text.trim(),
         );
 
-        // Add user to Firestore
-        await _db.collection('users').doc(userCredential.user!.uid).set({
-          'email': _emailController.text.trim(),
-          'createdAt': Timestamp.now(),
-        });
-
-        // Create initial task for the user
-        Task initialTask = Task(
-          title: 'Welcome Task',
-          subtitle: 'This is your first task',
-          startDate: DateTime.now(),
-          endDate: DateTime.now().add(const Duration(hours: 1)),
-          userId: userCredential.user!.uid,
+        UserModel newUser = UserModel(
+          id: userCredential.user!.uid,
+          email: _emailController.text.trim(),
+          name: '', // Collect user's name if needed
         );
 
-        await taskService.addTask(initialTask);
+        await _db.collection('users').doc(newUser.id).set(newUser.toMap());
+
+        await _db.collection('userSettings').doc(userCredential.user!.uid).set({
+          'reminderEnabled': false,
+          'reminderTime': 10,
+        });
 
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),
@@ -73,6 +72,7 @@ class _InscriptionViewState extends State<InscriptionView> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
