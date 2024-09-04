@@ -216,8 +216,6 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
 
     final userId = FirebaseAuth.instance.currentUser!.uid;
 
-    log("edit_task.dart : userId in edit_task : ${userId}");
-
     Map<String, dynamic> taskData = {
       'title': titleField.isNotEmpty ? titleField : 'Tâche sans titre', // Default to "Tâche sans titre" if title is empty
       'subtitle': subtitleField ?? '',
@@ -244,7 +242,6 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
 
       // Plannification de la notification de démarrage de la tâche avec le service associé
       // Notification de démarrage
-      /*
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
         title: "Tâche ${task.title} à démarrer",
@@ -257,11 +254,11 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         title: "${task.title} à venir",
         body: "${task.title} commence dans 10 minutes.",
         taskDate: task.startDate.subtract(const Duration(minutes: 10)), // todo rajouter la récupération du délais de reminder définit par utilisateur dans ces paramètres
-      );*/
+      );
 
       Navigator.pop(context);
     } catch (e) {
-      log("edit_task: Erreur lors de l'ajout ou de la mise à jour de la tâche : $e");
+      log("Erreur lors de l'ajout ou de la mise à jour de la tâche : $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Erreur lors de l'enregistrement de la tâche : $e")),
       );
