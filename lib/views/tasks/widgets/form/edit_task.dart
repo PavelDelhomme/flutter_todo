@@ -236,7 +236,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       final task = Task.fromMap(taskData);
 
       if (widget.taskId.isNotEmpty) {
-        await taskService.updateTaskByRecreating(task);
+        await taskService.updateTask(task);
       } else {
         await taskService.addTask(task);
         log("Adding task with data : ${task.toMap()}");
@@ -261,7 +261,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
 
       Navigator.pop(context);
     } catch (e) {
-      log("Erreur lors de l'ajout ou de la mise à jour de la tâche : $e");
+      log("edit_task: Erreur lors de l'ajout ou de la mise à jour de la tâche : $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Erreur lors de l'enregistrement de la tâche : $e")),
       );

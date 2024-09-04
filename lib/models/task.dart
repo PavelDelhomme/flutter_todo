@@ -51,13 +51,13 @@ class Task {
   static Task fromMap(Map<String, dynamic> map) {
     return Task(
       id: map['id'] ?? const Uuid().v4(),
-      title: map['title'] ?? '',  // Provide a default value to avoid null errors
+      title: map['title'] ?? '',
       subtitle: map['subtitle'] ?? '',
       notes: map['notes'] ?? '',
       priorityLevel: map['priorityLevel'] ?? 'Neutre',
-      startDate: (map['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(), // Use the current date if null
+      startDate: (map['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
       endDate: (map['endDate'] as Timestamp?)?.toDate() ?? DateTime.now().add(Duration(hours: 1)),
-      userId: map['userId'] ?? FirebaseAuth.instance.currentUser!.uid,
+      userId: map['userId'], // Ne pas assigner l'utilisateur connecté ici, mais bien récupérer le `userId` du document Firestore
       isCompleted: map['isCompleted'] ?? false,
     );
   }

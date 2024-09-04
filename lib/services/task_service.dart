@@ -79,7 +79,7 @@ class TaskService {
     }
   }
   */
-
+  /*
   Future<void> updateTaskByRecreating(Task task) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
@@ -88,7 +88,7 @@ class TaskService {
         throw Exception("User not authenticated");
       }
 
-      if (task.userId != null) {
+      if (task.userId != user.uid) {
         log("User does not have permission to update this task in updateTaskByRecreating (is not his own)");
         throw Exception("User does not have permission to update this task in updateTaskByRecreating (is not his own)");
       }
@@ -108,6 +108,55 @@ class TaskService {
       throw Exception("Failed to update task: $e");
     }
   }
+  */
+
+  Future<void> updateTask(Task task) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      log("user in updateTask in task_service : $user");
+      log("user.uid in updateTask in task_service : ${user?.uid}");
+
+      if (user == null) {
+        log("task_service : updateTask : user == null");
+        throw Exception("User not authenticated");
+      }
+
+      if (task.userId != user.uid) {
+        log("task_service : updateTask : task.userId != user.uid");
+        throw Exception("User does not have permission to update this task. It's not his task.");
+      }
+
+      DocumentSnapshot documentSnapshot = await taskCollection.doc(task.id).get();
+
+      if (!documentSnapshot.exists) {
+        log("task_service : updateTask : documentSnapshot doesn't exists yet");
+      }
+
+      log("task_service.dart : userId in task_service : ${user.uid}");
+
+      // Annulation de l'ancienne notification
+      await notificationService.cancelNotification(task.id.hashCode);
+
+      log("task_service.dart task.toMap : ${task.toMap()}");
+
+      // Mise a jour de la tâche dans Firestore
+      await taskCollection.doc(task.id).update(task.toMap(excludeId: true));
+
+      log("task_service updating task with taskCollection.doc(task.id).update(task.toMap())");
+
+      // Reprogrammation de notification avec la nouvelle date
+      await notificationService.scheduleNotification(
+        id: task.id.hashCode,
+        title: "Mise à jour: ${task.title}",
+        body: "Votre tâche \"${task.title}\" a été mise à jour.",
+        taskDate: task.startDate,
+      );
+    } catch (e) {
+      log("Error updating task : $e");
+      throw Exception("Failed to update task: $e");
+    }
+  }
+
 
   Future<void> deleteTask(String id) async {
     try {
