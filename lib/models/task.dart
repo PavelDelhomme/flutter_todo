@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
@@ -8,46 +9,57 @@ class Task {
   String id;
   String title;
   String subtitle;
-  bool isCompleted;
+  String notes;
+  String priorityLevel;
   DateTime startDate;
   DateTime endDate;
-  String priorityLevel;
   String userId;
+  bool isCompleted;
 
   Task({
     String? id,
     required this.title,
     required this.subtitle,
-    this.isCompleted = false,
+    this.notes = '',
+    this.priorityLevel = 'Neutre',
     required this.startDate,
     required this.endDate,
-    this.priorityLevel = 'Neutre',
     required this.userId,
+    this.isCompleted = false,
   }) : id = id ?? const Uuid().v4();
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'title': title,
-      'subtitle': subtitle,
-      'isCompleted': isCompleted,
-      'startDate': Timestamp.fromDate(startDate),
-      'endDate': Timestamp.fromDate(endDate),
-      'priorityLevel': priorityLevel,
-      'userId': userId,
+  Map<String, dynamic> toMap({bool excludeId = false}) {
+    final map = {
+      //'id': id, // OK Firebase
+      'title': title, // OK Firebase
+      'subtitle': subtitle, // OK Firebase
+      'notes': notes, // Okay Firebase
+      'priorityLevel': priorityLevel, // OK Firebase
+      'startDate': Timestamp.fromDate(startDate), // OK Firebase
+      'endDate': Timestamp.fromDate(endDate), // OK Firebase
+      'userId': userId, // Ok Firebase
+      'isCompleted': isCompleted, // Ok Firebase
     };
+
+    if (!excludeId) {
+      map['id'] = id;
+    }
+
+    return map;
   }
 
   static Task fromMap(Map<String, dynamic> map) {
     return Task(
-      id: map['id'],
-      title: map['title'],
-      subtitle: map['subtitle'],
-      isCompleted: map['isCompleted'],
-      startDate: (map['startDate'] as Timestamp).toDate(),
-      endDate: (map['endDate'] as Timestamp).toDate(),
-      priorityLevel: map['priorityLevel'],
-      userId: map['userId'],
+      id: map['id'] ?? const Uuid().v4(),
+      title: map['title'] ?? '',  // Provide a default value to avoid null errors
+      subtitle: map['subtitle'] ?? '',
+      notes: map['notes'] ?? '',
+      priorityLevel: map['priorityLevel'] ?? 'Neutre',
+      startDate: (map['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(), // Use the current date if null
+      endDate: (map['endDate'] as Timestamp?)?.toDate() ?? DateTime.now().add(Duration(hours: 1)),
+      userId: map['userId'] ?? FirebaseAuth.instance.currentUser!.uid,
+      isCompleted: map['isCompleted'] ?? false,
     );
   }
+
 }

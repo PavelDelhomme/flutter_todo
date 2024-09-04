@@ -1,36 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_firebase/models/task.dart';
-import 'package:todo_firebase/utils/custom_colors.dart';
-import 'package:todo_firebase/views/tasks/widgets/task_details/task_detail_view.dart';
+
+import '../details/details_task.dart';
+import '../form/edit_task.dart';
 
 class TaskWidget extends StatelessWidget {
   final Task task;
   final VoidCallback onDismissed;
   final VoidCallback onMarkedComplete;
-  final List<Task> tasks;
 
   const TaskWidget({
-    super.key,
+    Key? key,
     required this.task,
     required this.onDismissed,
     required this.onMarkedComplete,
-    required this.tasks,
-  });
+  }) : super(key: key);
 
-  // Helper to format date
   String formatDateTime(DateTime? dateTime) {
-    return dateTime != null ? DateFormat('yyyy-MM-dd – HH:mm').format(dateTime) : 'No reminder set';
+    return dateTime != null ? DateFormat('yyyy-MM-dd – HH:mm').format(dateTime) : 'Pas de rappel';
   }
 
-  // Helper to determine task status color
   Color _getTaskColor() {
     if (task.isCompleted) {
-      return Colors.green.withOpacity(0.6); // Completed tasks
+      return Colors.green.withOpacity(0.6);
     } else if (task.endDate.isBefore(DateTime.now())) {
-      return Colors.red.withOpacity(0.6); // Overdue tasks
+      return Colors.red.withOpacity(0.6);
     } else {
-      return Colors.yellow.withOpacity(0.6); // Ongoing tasks
+      return Colors.yellow.withOpacity(0.6);
     }
   }
 
@@ -41,19 +38,59 @@ class TaskWidget extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TaskDetailView(task: task),
+            builder: (context) => TaskDetailsScreen(taskId: task.id),
           ),
         );
       },
       child: Dismissible(
         key: Key(task.id),
-        background: Container(color: Colors.red),
+        background: Container(
+          color: Colors.green,
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: const Icon(Icons.edit, color: Colors.white),
+        ),
+        secondaryBackground: Container(
+          color: Colors.red,
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: const Icon(Icons.delete, color: Colors.white),
+        ),
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.endToStart) {
+            return await showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text("Confirmation"),
+                  content: const Text("Voulez-vous vraiment supprimer cette tâche ?"),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(false),
+                      child: const Text("Annuler"),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(true),
+                      child: const Text("Supprimer"),
+                    ),
+                  ],
+                );
+              },
+            );
+          } else if (direction == DismissDirection.startToEnd) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EditTaskScreen(taskId: task.id),
+              ),
+            );
+            return false;
+          }
+          return false;
+        },
         onDismissed: (direction) {
           if (direction == DismissDirection.endToStart) {
-            tasks.removeWhere((element) => element.id == task.id);
             onDismissed();
-          } else if (direction == DismissDirection.startToEnd) {
-            onMarkedComplete();
           }
         },
         child: Container(
@@ -73,12 +110,14 @@ class TaskWidget extends StatelessWidget {
             leading: GestureDetector(
               onTap: onMarkedComplete,
               child: Container(
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: task.isCompleted ? Colors.green : Colors.grey,
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 0.8),
                 ),
-                child: const Icon(Icons.check, color: Colors.white),
+                child: const Icon(Icons.check, color: Colors.white, size: 24),
               ),
             ),
             title: Padding(

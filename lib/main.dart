@@ -1,18 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:todo_firebase/models/task.dart';
-import 'package:todo_firebase/services/task_service.dart';
 import 'package:todo_firebase/views/authentication/connexion_view.dart';
 import 'package:todo_firebase/views/home/home_view.dart';
 import 'firebase_options.dart';
 import 'views/authentication/auth_wrapper.dart';
 import 'services/notification_service.dart';
+import 'package:timezone/data/latest.dart' as tz;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await Hive.initFlutter();

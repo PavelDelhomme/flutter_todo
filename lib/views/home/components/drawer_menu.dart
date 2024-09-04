@@ -1,14 +1,13 @@
-import 'dart:developer';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../authentication/connexion_view.dart';
 import '../../settings/settings_view.dart';
+import '../../tasks/widgets/list/tasks.dart';
 
 class DrawerMenu extends StatelessWidget {
   const DrawerMenu({super.key, required this.onSignOut});
 
-  final VoidCallback onSignOut;
+  final Function(String, Widget) onSignOut;
 
   Future<void> _signOut(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
@@ -16,8 +15,17 @@ class DrawerMenu extends StatelessWidget {
       MaterialPageRoute(builder: (context) => const ConnexionView()),
           (Route<dynamic> route) => false,
     );
-    log("Déconnexion utilisateur");
   }
+  //final VoidCallback onSignOut;
+
+  /*Future<void> _signOut(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const ConnexionView()),
+          (Route<dynamic> route) => false,
+    );
+    log("Déconnexion utilisateur");
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -39,28 +47,14 @@ class DrawerMenu extends StatelessWidget {
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.home),
-            title: const Text('Accueil'),
-            onTap: () {
-              Navigator.pop(context); // Close the drawer
-            },
+            leading: const Icon(Icons.list),
+            title: const Text('Liste des tâches'),
+            onTap: () => onSignOut('Tâches', const TasksList()),
           ),
           ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('Paramètres'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsView()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.info),
-            title: const Text('About'),
-            onTap: () {
-              // todo Navigate to About Page
-            },
+            onTap: () => onSignOut('Paramètres', const SettingsView()),
           ),
           ListTile(
             leading: const Icon(Icons.logout),

@@ -13,6 +13,8 @@ class ConnexionView extends StatefulWidget {
   _ConnexionViewState createState() => _ConnexionViewState();
 }
 
+//TODO: La connexion ne se fait a la première entrée des identifiants de l'utilisateur il faut qu'il les entre 2 fois ?
+
 class _ConnexionViewState extends State<ConnexionView> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -33,30 +35,39 @@ class _ConnexionViewState extends State<ConnexionView> {
         log("connexion_view : _auth.signInWithEmailAndPassword passed");
 
         // Redirection vers HomeView après connexion réussie
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeView()),
-        );
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomeView()),
+          );
+        }
       } on FirebaseAuthException {
         log("connexion_view : Echec de la connexion identifiant non valide");
-        Flushbar(
-          message: "Identifiants incorrects. Veuillez réessayer.",
-          duration: const Duration(seconds: 3),
-          flushbarPosition: FlushbarPosition.TOP,
-        ).show(context);
+        if (mounted) {
+          Flushbar(
+            message: "Identifiants incorrects. Veuillez réessayer.",
+            duration: const Duration(seconds: 3),
+            flushbarPosition: FlushbarPosition.TOP,
+          ).show(context);
+        }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Echec de la connexion : $e')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Echec de la connexion : $e')),
+          );
+        }
         log("connexion_view : Erreur de la connexion $e");
         log("connexion_view : email passé : $_emailController");
         log("connexion_view : password passé : $_passwordController");
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
