@@ -11,8 +11,8 @@ class TaskService {
     try {
       await taskCollection.doc(task.id).set(task.toMap());
 
-      // Planifier la notification
-      await notificationService.scheduleNotificationForTask(
+      // Planifier la notification de démarrage de la tâche
+      await notificationService.scheduleNotification(
         id: task.id.hashCode,
         title: "Rappel : ${task.title}",
         body: "Votre tâche \"${task.title}\" commence bientôt.",
@@ -32,7 +32,7 @@ class TaskService {
       await taskCollection.doc(task.id).update(task.toMap());
 
       // Reprogrammer la notification avec la nouvelle date
-      await notificationService.scheduleNotificationForTask(
+      await notificationService.scheduleNotification(
         id: task.id.hashCode,
         title: "Mise à jour: ${task.title}",
         body: "Votre tâche \"${task.title}\" a été mise à jour.",

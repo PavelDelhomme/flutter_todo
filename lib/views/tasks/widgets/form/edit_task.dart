@@ -5,8 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_firebase/services/notification_service.dart';
 
-import '../../../models/task.dart';
-import '../../../services/task_service.dart';
+import '../../../../models/task.dart';
+import '../../../../services/task_service.dart';
 
 class EditTaskScreen extends StatefulWidget {
   final String taskId;
@@ -19,12 +19,12 @@ class EditTaskScreen extends StatefulWidget {
 
 class _EditTaskScreenState extends State<EditTaskScreen> {
   final _formKey = GlobalKey<FormState>();
-  String title = '';
-  String subtitle = '';
-  String? notes = '';
+  String titleField = '';
+  String subtitleField = '';
+  String? notesField = '';
   DateTime? startDate;
   DateTime? endDate;
-  String priorityLevel = 'Neutre';
+  String priorityLevelField = 'Neutre';
   bool _isLoading = true;
 
   late TextEditingController _startDateController;
@@ -53,10 +53,10 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
 
       if (data != null) {
         setState(() {
-          title = data['title'] ?? '';
-          subtitle = data['subtitle'] ?? '';
-          notes = data['notes'] ?? '';
-          priorityLevel = data['priority'] ?? 'Neutre';
+          titleField = data['title'] ?? '';
+          subtitleField = data['subtitle'] ?? '';
+          notesField = data['notes'] ?? '';
+          priorityLevelField = data['priority'] ?? 'Neutre';
           startDate = (data['startDate'] as Timestamp).toDate();
           endDate = (data['endDate'] as Timestamp).toDate();
           _startDateController.text = DateFormat('yyyy-MM-dd HH:mm').format(startDate!);
@@ -74,53 +74,6 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       );
     }
   }
-
-  Future<void> _saveOrUpdateTask() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-    _formKey.currentState!.save();
-
-    final userId = FirebaseAuth.instance.currentUser!.uid;
-
-    Map<String, dynamic> taskData = {
-      'title': title.isNotEmpty ? title : 'Tâche sans titre', // Default to "Tâche sans titre" if title is empty
-      'subtitle': subtitle ?? '',
-      'notes': notes ?? '',
-      'priorityLevel': priorityLevel.isNotEmpty ? priorityLevel : 'Neutre',
-      'startDate': Timestamp.fromDate(startDate ?? DateTime.now()), // Default to now if startDate is null
-      'endDate': Timestamp.fromDate(endDate ?? DateTime.now().add(Duration(hours: 1))),
-      'userId': userId,
-      'isCompleted': false,
-    };
-
-
-    try {
-      final task = Task.fromMap(taskData);
-
-      if (widget.taskId.isEmpty) {
-        await taskService.addTask(task);
-      } else {
-        task.id = widget.taskId;
-        await taskService.updateTask(task);
-      }
-
-      await notificationService.scheduleNotificationForTask(
-        id: task.id.hashCode,
-        title: "Rappel : ${task.title}",
-        body: "\"${task.title}\" commence bientôt.",
-        taskDate: task.startDate,
-      );
-
-      Navigator.pop(context);
-    } catch (e) {
-      log("Erreur lors de l'ajout ou de la mise à jour de la tâche : $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur lors de l'enregistrement de la tâche : $e")),
-      );
-    }
-  }
-
 
   Future<void> _selectStartDate(BuildContext context) async {
     final pickedDate = await showDatePicker(
@@ -154,8 +107,6 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       }
     }
   }
-
-
   Future<void> _selectEndDate(BuildContext context) async {
     final pickedDate = await showDatePicker(
       context: context,
@@ -184,7 +135,6 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -199,15 +149,15 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
           padding: const EdgeInsets.all(16),
           children: <Widget>[
             TextFormField(
-              initialValue: title,
+              initialValue: titleField,
               decoration: const InputDecoration(labelText: "Titre de la tâche"),
-              onSaved: (value) => title = value!,
+              onSaved: (value) => titleField = value!,
               validator: (value) => value!.isEmpty ? 'Ce champ ne peut être vide' : null,
             ),
             TextFormField(
-              initialValue: subtitle,
+              initialValue: subtitleField,
               decoration: const InputDecoration(labelText: "Sous-titre de la tâche"),
-              onSaved: (value) => subtitle = value!,
+              onSaved: (value) => subtitleField = value!,
             ),
             TextFormField(
               controller: _startDateController,
@@ -232,7 +182,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
               ),
             ),
             DropdownButtonFormField<String>(
-              value: priorityLevel.isNotEmpty ? priorityLevel : null,
+              value: priorityLevelField.isNotEmpty ? priorityLevelField : null,
               items: ["Urgent", "Neutre", "Non urgent"].map((String priority) {
                 return DropdownMenuItem<String>(
                   value: priority,
@@ -240,12 +190,12 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                 );
               }).toList(),
               decoration: const InputDecoration(labelText: 'Priorité'),
-              onChanged: (value) => setState(() => priorityLevel = value ?? ''),
+              onChanged: (value) => setState(() => priorityLevelField = value ?? ''),
             ),
             TextFormField(
-              initialValue: notes,
+              initialValue: notesField,
               decoration: const InputDecoration(labelText: 'Notes'),
-              onSaved: (value) => notes = value!,
+              onSaved: (value) => notesField = value!,
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -256,5 +206,60 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _saveOrUpdateTask() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+    _formKey.currentState!.save();
+
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+
+    Map<String, dynamic> taskData = {
+      'title': titleField.isNotEmpty ? titleField : 'Tâche sans titre', // Default to "Tâche sans titre" if title is empty
+      'subtitle': subtitleField ?? '',
+      'notes': notesField ?? '',
+      'priorityLevel': priorityLevelField.isNotEmpty ? priorityLevelField : 'Neutre',
+      'startDate': Timestamp.fromDate(startDate ?? DateTime.now()), // Default to now if startDate is null
+      'endDate': Timestamp.fromDate(endDate ?? DateTime.now().add(Duration(hours: 1))),
+      'userId': userId,
+      'isCompleted': false,
+    };
+
+
+    try {
+      final task = Task.fromMap(taskData);
+
+      if (widget.taskId.isNotEmpty) {
+        await taskService.updateTask(task);
+      } else {
+        await taskService.addTask(task);
+        log("Adding task with data : ${task.toMap()}");
+      }
+
+      // Plannification de la notification de démarrage de la tâche avec le service associé
+      // Notification de démarrage
+      await notificationService.scheduleNotification(
+        id: task.id.hashCode,
+        title: "Tâche ${task.title} à démarrer",
+        body: "${task.title} doit commencer à ${task.startDate}",
+        taskDate: task.startDate,
+      );
+      // Notification de rappel
+      await notificationService.scheduleNotification(
+        id: task.id.hashCode + 1,
+        title: "${task.title} à venir",
+        body: "${task.title} commence dans 10 minutes.",
+        taskDate: task.startDate.subtract(const Duration(minutes: 10)), // todo rajouter la récupération du délais de reminder définit par utilisateur dans ces paramètres
+      );
+
+      Navigator.pop(context);
+    } catch (e) {
+      log("Erreur lors de l'ajout ou de la mise à jour de la tâche : $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur lors de l'enregistrement de la tâche : $e")),
+      );
+    }
   }
 }

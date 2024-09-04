@@ -63,6 +63,7 @@ class NotificationService {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final doc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
+      log("userSettings dans _getUserNotificationSettings : ${doc.data()}");
       if (doc.exists) {
         return doc.data()!;
       }
@@ -73,21 +74,23 @@ class NotificationService {
     };
   }
 
-  Future<void> scheduleNotificationForTask({
+  Future<void> scheduleNotification({
     required int id,
     required String title,
     required String body,
     required DateTime taskDate,
   }) async {
     final userSettings = await _getUserNotificationSettings();
+    log("Contenu userSettings : ${userSettings}");
+
     if (userSettings['reminderEnabled'] == true) {
 
-      final reminderTime = userSettings['reminderTime'] as int;
+      //final reminderTime = userSettings['reminderTime'] as int;
 
-      final reminderDate = taskDate.subtract(Duration(minutes: reminderTime));
+      //final reminderDate = taskDate.subtract(Duration(minutes: reminderTime));
 
-      final scheduledTZDateTime = tz.TZDateTime.from(reminderDate, tz.local);
-      log("Scheduling notification: $title at $reminderDate");
+      final scheduledTZDateTime = tz.TZDateTime.from(taskDate, tz.local);
+      log("Scheduling notification: $title at $scheduledTZDateTime");
 
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         id,

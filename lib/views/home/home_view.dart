@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:todo_firebase/views/home/components/drawer_menu.dart';
-import 'package:todo_firebase/views/tasks/widgets/edit_task.dart';
-import 'package:todo_firebase/views/tasks/widgets/tasks.dart';
+import 'package:todo_firebase/views/tasks/widgets/form/edit_task.dart';
+import 'package:todo_firebase/views/tasks/widgets/list/tasks.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});

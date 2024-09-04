@@ -3,14 +3,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'details_task.dart';
-import 'edit_task.dart';
+import '../../../../utils/custom_str.dart';
+import '../details/details_task.dart';
+import '../form/edit_task.dart';
 
 class TasksList extends StatelessWidget {
   const TasksList({Key? key}) : super(key: key);
 
   String formatDateTime(DateTime? dateTime) {
-    return dateTime != null ? DateFormat('EEE d MMM yyyy à HH:mm').format(dateTime) : 'No reminder set';
+    return dateTime != null ? DateFormat('EEE d MMM yyyy à HH:mm').format(dateTime) : CustomStr.noReminder;
   }
 
   Color getTaskColor(DateTime startDate, DateTime endDate, bool isCompleted) {
@@ -43,12 +44,12 @@ class TasksList extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return const Center(child: Text("Erreur lors du chargement des données"));
+            return const Center(child: Text(CustomStr.errorLoadingDatas));
           }
 
           var docs = snapshot.data!.docs;
           if (docs.isEmpty) {
-            return const Center(child: Text("Pas encore de tâches"));
+            return const Center(child: Text(CustomStr.noTaskYet));
           }
 
           return ListView.builder(
@@ -85,16 +86,16 @@ class TasksList extends StatelessWidget {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
-                            title: const Text("Confirmer"),
-                            content: const Text("Voulez-vous vraiment supprimer cette tâche ?"),
+                            title: const Text(CustomStr.confirm),
+                            content: const Text(CustomStr.wantToDeleteTask),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.of(context).pop(false),
-                                child: const Text("Annuler"),
+                                child: const Text(CustomStr.abord),
                               ),
                               TextButton(
                                 onPressed: () => Navigator.of(context).pop(true),
-                                child: const Text("Supprimer"),
+                                child: const Text(CustomStr.delete),
                               ),
                             ],
                           );
@@ -107,7 +108,7 @@ class TasksList extends StatelessWidget {
                     if (direction == DismissDirection.endToStart) {
                       _deleteTask(docs[index].id);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Tâche supprimée")),
+                        const SnackBar(content: Text(CustomStr.deletedTask)),
                       );
                     }
                     else if (direction == DismissDirection.startToEnd) {
@@ -185,7 +186,7 @@ class TasksList extends StatelessWidget {
         children: [
           SpeedDialChild(
             child: const Icon(Icons.add_task),
-            label: 'Ajouter une tâche',
+            label: CustomStr.addNewTask,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => const EditTaskScreen(taskId: ''),
