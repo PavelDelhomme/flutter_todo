@@ -84,6 +84,11 @@ class NotificationService {
     log("Contenu userSettings : ${userSettings}");
 
     if (userSettings['reminderEnabled'] == true) {
+      log("reminder in userSettings : ${userSettings['reminderTime']}");
+      log("reminder in userSettings as int : ${userSettings['reminderTime'] as int}");
+      log("taskDate : ${taskDate}");
+      log("reminderDate for this task : ${taskDate.subtract(Duration(minutes: userSettings['reminderTime'] as int))}");
+      log("reminderDate for this task with userSettings without int : ${taskDate.subtract(Duration(minutes: userSettings['reminderTime']))}");
 
       //final reminderTime = userSettings['reminderTime'] as int;
 
