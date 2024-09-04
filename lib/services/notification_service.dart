@@ -22,7 +22,6 @@ class NotificationService {
   Future<void> initialize() async {
     await _flutterLocalNotificationsPlugin.initialize(initializationSettings);
     tz.initializeTimeZones();
-    tz.setLocalLocation(tz.getLocation('Europe/Paris')); // Utiliser une timezone en dur
     log("NotificationService initialized");
 
     await _requestPermissions();
@@ -82,11 +81,12 @@ class NotificationService {
   }) async {
     final userSettings = await _getUserNotificationSettings();
     if (userSettings['reminderEnabled'] == true) {
+
       final reminderTime = userSettings['reminderTime'] as int;
+
       final reminderDate = taskDate.subtract(Duration(minutes: reminderTime));
 
       final scheduledTZDateTime = tz.TZDateTime.from(reminderDate, tz.local);
-
       log("Scheduling notification: $title at $reminderDate");
 
       await _flutterLocalNotificationsPlugin.zonedSchedule(

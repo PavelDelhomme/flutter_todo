@@ -96,14 +96,21 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
 
 
     try {
+      final task = Task.fromMap(taskData);
+
       if (widget.taskId.isEmpty) {
-        final task = Task.fromMap(taskData);
         await taskService.addTask(task);
       } else {
-        final task = Task.fromMap(taskData);
         task.id = widget.taskId;
         await taskService.updateTask(task);
       }
+
+      await notificationService.scheduleNotificationForTask(
+        id: task.id.hashCode,
+        title: "Rappel : ${task.title}",
+        body: "\"${task.title}\" commence bientôt.",
+        taskDate: task.startDate,
+      );
 
       Navigator.pop(context);
     } catch (e) {
