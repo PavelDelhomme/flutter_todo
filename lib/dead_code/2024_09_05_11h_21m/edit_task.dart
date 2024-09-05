@@ -223,16 +223,18 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     log("edit_task : _saveOrUpdateTask : userId : $userId");
 
     final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
-    String taskId = widget.taskId.isEmpty ? taskCollection.doc().id : widget.taskId; // Création d'un nouvel id si la tâche n'existe pas et n'est pas trouvé dans la collection
+    log("edit_task : _saveOrUpdateTask : taskCollection : $taskCollection");
+
+    String taskId = widget.taskId.isEmpty ? taskCollection.doc().id : widget.taskId;
     log("edit_task : _saveOrUpdateTask : widget.taskId : $taskId");
 
     Map<String, dynamic> taskData = {
       'id': taskId,
-      'title': titleField.isNotEmpty ? titleField : 'Tâche sans titre',
+      'title': titleField.isNotEmpty ? titleField : 'Tâche sans titre', // Default to "Tâche sans titre" if title is empty
       'subtitle': subtitleField ?? '',
       'notes': notesField ?? '',
       'priorityLevel': priorityLevelField.isNotEmpty ? priorityLevelField : 'Neutre',
-      'startDate': Timestamp.fromDate(startDate ?? DateTime.now()),
+      'startDate': Timestamp.fromDate(startDate ?? DateTime.now()), // Default to now if startDate is null
       'endDate': Timestamp.fromDate(endDate ?? DateTime.now().add(Duration(hours: 1))),
       'userId': userId,
       'isCompleted': false,
@@ -243,18 +245,19 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
 
     try {
       final task = Task.fromMap(taskData);
+      log("edit_task.dart : _saveOrUpdateTask : task fromMap(taskData) : $task");
 
-      if (widget.taskId.isEmpty) {
-        // Create task
-        await taskService.addTask(task);
-        log("edit_task.dart : _saveOrUpdateTask : Task created with data : ${task.toMap()}");
-      } else {
-        // Update task
+      if (widget.taskId.isNotEmpty) {
         await taskService.updateTask(task);
-        log("edit_task.dart : _saveOrUpdateTask : Task updated with data : ${task.toMap()}");
+        log("edit_task.dart : _saveOrUpdateTask : Updating task with data : $taskData");
+        log("New data for task : ${task}");
+      } else {
+        await taskService.addTask(task);
+        log("_saveOrUpdateTask : _saveOrUpdateTask : Adding task with data : ${task.toMap()}");
       }
 
-      // Plannification de la notification de démarrage de la  tâche avec le service de notificatoin
+      // Plannification de la notification de démarrage de la tâche avec le service associé
+      // Notification de démarrage
       log("_saveOrUpdateTask : _saveOrUpdateTask : Planning starting notification for task");
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
@@ -262,20 +265,22 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         body: "${task.title} doit commencer à ${task.startDate}",
         taskDate: task.startDate,
       );
-
+      log("_saveOrUpdateTask : _saveOrUpdateTask : Starting notification planned");
+      log("_saveOrUpdateTask : _saveOrUpdateTask : Planning reminder notification for task");
+      // Notification de rappel
       await notificationService.scheduleNotification(
         id: task.id.hashCode + 1,
         title: "${task.title} à venir",
-        body: "${task.title} commence dans 10 minutes",
-        taskDate: task.startDate.subtract(const Duration(minutes: 10)),
+        body: "${task.title} commence dans 10 minutes.",
+        taskDate: task.startDate.subtract(const Duration(minutes: 10)), // todo rajouter la récupération du délais de reminder définit par utilisateur dans ces paramètres
       );
+      log("_saveOrUpdateTask : _saveOrUpdateTask : Reminder notification planned");
 
       Navigator.pop(context);
     } catch (e) {
       log("Erreur lors de l'ajout ou de la mise à jour de la tâche : $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text("Erreur lors de l'enregistrement de la tâche $e")),
+        SnackBar(content: Text("Erreur lors de l'enregistrement de la tâche : $e")),
       );
     }
   }

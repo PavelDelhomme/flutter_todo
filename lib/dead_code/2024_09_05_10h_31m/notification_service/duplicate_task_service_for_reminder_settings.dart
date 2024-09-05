@@ -1,10 +1,10 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/task.dart';
-import '../services/notification_service.dart';
+import '../../../models/task.dart';
+import '../../../services/notification_service.dart';
 
-class TaskService {
+class DuplicateTaskServiceForReminderSettings {
   final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
 
   Future<void> addTask(Task task) async {
@@ -125,4 +125,4 @@ class TaskService {
   }
 }
 
-final TaskService taskService = TaskService();
+final DuplicateTaskServiceForReminderSettings duplicateTaskServiceForReminderSettings = DuplicateTaskServiceForReminderSettings();

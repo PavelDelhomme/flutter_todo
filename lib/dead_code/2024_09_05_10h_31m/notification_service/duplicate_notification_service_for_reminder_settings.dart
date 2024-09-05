@@ -8,13 +8,13 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
 
-class NotificationService {
+class DuplicateNotificationServiceForReminderSettings {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   final AndroidInitializationSettings initializationSettingsAndroid = const AndroidInitializationSettings('@mipmap/ic_launcher');
   final InitializationSettings initializationSettings;
 
-  NotificationService()
+  DuplicateNotificationServiceForReminderSettings()
       : initializationSettings = const InitializationSettings(
     android: AndroidInitializationSettings('@mipmap/ic_launcher'),
   );
@@ -146,4 +146,4 @@ class NotificationService {
   }
 }
 
-final NotificationService notificationService = NotificationService();
+final DuplicateNotificationServiceForReminderSettings notificationService = DuplicateNotificationServiceForReminderSettings();

@@ -80,6 +80,7 @@ class NotificationService {
     required String body,
     required DateTime taskDate,
   }) async {
+    /*
     final userSettings = await _getUserNotificationSettings();
     log("Contenu userSettings : ${userSettings}");
 
@@ -106,6 +107,43 @@ class NotificationService {
           android: AndroidNotificationDetails(
             'task_reminder',
             'Task Reminder',
+            channelDescription: 'Reminder de tâche',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+        ),
+        androidAllowWhileIdle: true,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+      ).then((value) => log("Notification scheduled successfully: $title at $scheduledTZDateTime"))
+          .catchError((error) {
+        log("Error scheduling notification: $error");
+      });
+    } else {
+      log("Reminders are disabled; no notification will be scheduled.");
+    }*/
+    final userSettings = await _getUserNotificationSettings();
+    log("notification_service : scheduleNotification : Contenu userSettings ${userSettings}");
+
+    if (userSettings['reminderEnabled']) {
+      final reminderTime = userSettings['reminderTime'] as int;
+      final reminderDate = taskDate.subtract(Duration(minutes: reminderTime));
+
+      log("notification_service : scheduleNotification : Notification scheduled for task at : ${taskDate}");
+      log("notification_service : scheduleNotification : Reminder set for : ${reminderDate}");
+
+      final scheduledTZDateTime = tz.TZDateTime.from(reminderDate, tz.local);
+      log("notification_service : scheduleNotification : Scheduling notification : $title at $scheduledTZDateTime");
+
+      await _flutterLocalNotificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledTZDateTime,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+              'task_reminder',
+              'Task Reminder',
             channelDescription: 'Reminder de tâche',
             importance: Importance.max,
             priority: Priority.high,
