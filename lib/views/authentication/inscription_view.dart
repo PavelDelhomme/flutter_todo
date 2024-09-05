@@ -1,10 +1,7 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:todo_firebase/models/task.dart';
-import 'package:todo_firebase/services/task_service.dart';
 import '../../models/user.dart';
 import '../home/home_view.dart';
 

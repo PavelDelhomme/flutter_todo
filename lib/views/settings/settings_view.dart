@@ -3,6 +3,9 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:todo_firebase/services/notification_service.dart';
+
+import '../../models/task.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -39,37 +42,51 @@ class _SettingsViewState extends State<SettingsView> {
       log("Settings for reminder : reminderTime ${_reminderTime}");
     }
   }
-
   Future<void> _saveSettings() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final docRef = FirebaseFirestore.instance.collection('userSettings').doc(user.uid);
-      final doc = await docRef.get();
+      final settingsDocRef = FirebaseFirestore.instance.collection('userSettings').doc(user.uid);
+
       try {
-        if (doc.exists) {
-          await docRef.update({
-            'reminderEnabled': _reminderEnabled,
-            'reminderTime': _reminderTime,
-          });
-        } else {
-          await docRef.set({
-            'reminderEnabled': _reminderEnabled,
-            'reminderTime': _reminderTime,
-          });
+        await settingsDocRef.set({
+          'reminderEnabled': _reminderEnabled,
+          'reminderTime': _reminderTime,
+        });
+
+        // Annuler et reprogrammer toutes les notifications pour les tâches existantes
+        await notificationService.cancelAllNotificationsForUser();
+
+        final taskSnapshot = await FirebaseFirestore.instance.collection('tasks')
+            .where('userId', isEqualTo: user.uid)
+            .get();
+
+        for (var taskDoc in taskSnapshot.docs) {
+          final taskData = taskDoc.data();
+          final Task task = Task.fromMap(taskData);
+
+          await notificationService.scheduleNotification(
+            id: task.id.hashCode,
+            title: "Démarrage de la tâche ${task.title}",
+            body: "${task.title} commence maintenant",
+            taskDate: task.startDate,
+            typeNotification: "start",
+          );
+
+          await notificationService.scheduleNotification(
+            id: task.id.hashCode + 1,
+            title: "Rappel de la tâche ${task.title}",
+            body: "${task.title} commence bientôt",
+            taskDate: task.startDate,
+            typeNotification: "reminder",
+          );
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Paramètres enregistrés avec succès'),
-            duration: Duration(seconds: 2),
-          ),
+          SnackBar(content: Text("Paramètres enregistrés avec succès")),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors de l\'enregistrement des paramètres : $e'),
-            duration: const Duration(seconds: 2),
-          ),
+          SnackBar(content: Text('Erreur lors de l\'enregistrement des paramètres : $e')),
         );
       }
     }
@@ -124,9 +141,6 @@ class _SettingsViewState extends State<SettingsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Paramètres'),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(

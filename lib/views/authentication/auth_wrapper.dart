@@ -16,25 +16,8 @@ class AuthWrapper extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (snapshot.hasData) {
-          User? user = snapshot.data;
-          if (user != null) {
-            return FutureBuilder<DocumentSnapshot>(
-              future: FirebaseFirestore.instance.collection('users').doc(user.uid).get(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
-                  FirebaseAuth.instance.signOut();
-                  return const ConnexionView();
-                }
-
-                return const HomeView();
-              },
-            );
-          }
+        if (snapshot.hasData && snapshot.data != null) {
+          return const HomeView();
         }
 
         return const ConnexionView();

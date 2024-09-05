@@ -9,7 +9,17 @@ class TaskService {
 
   Future<void> addTask(Task task) async {
     try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        throw Exception("User not authenticated");
+      }
+      log("Adding task for user: ${user.uid}");
+
+      task.userId = user.uid;
+
       await taskCollection.doc(task.id).set(task.toMap());
+      log("Task added with id: ${task.id}");
 
       // Planifier la notification de démarrage de la tâche
       await notificationService.scheduleNotification(
@@ -17,71 +27,81 @@ class TaskService {
         title: "Rappel : ${task.title}",
         body: "Votre tâche \"${task.title}\" commence bientôt.",
         taskDate: task.startDate,
+        typeNotification: 'start',
       );
     } catch (e) {
       throw Exception('Failed to add task: $e');
     }
   }
 
+
   Future<void> updateTask(Task task) async {
     try {
-      // Annuler l'ancienne notification
+      final user = FirebaseAuth.instance.currentUser;
+      log("user in updateTask in task_service : $user");
+      log("user.uid in updateTask in task_service : ${user?.uid}");
+
+      if (user == null) {
+        log("task_service : updateTask : user == null");
+        throw Exception("User not authenticated");
+      }
+
+      if (task.userId != user.uid) {
+        log("task_service : updateTask : task.userId != user.uid");
+        throw Exception("User does not have permission to update this task. It's not their task.");
+      }
+
+      // Récupérer le document de Firestore
+      DocumentSnapshot documentSnapshot = await taskCollection.doc(task.id).get();
+      log("task_service : updateTask : task.id : ${task.id}");
+      log("task_service : updateTask : task.id.hashCode : ${task.id.hashCode}");
+
+      if (!documentSnapshot.exists) {
+        log("task_service : updateTask : Task with id ${task.id} does not exist in Firestore.");
+        throw Exception("Task does not exist");
+      }
+
+      log("task_service.dart : userId in task_service : ${user.uid}");
+      log("task_service.dart : task data before update: ${documentSnapshot.data()}");
+
+      // Annulation de l'ancienne notification
       await notificationService.cancelNotification(task.id.hashCode);
+      log("Notification canceled for task id: ${task.id.hashCode}");
 
-      // Mettre à jour la tâche dans Firestore
+      // Mise à jour de la tâche dans Firestore
       await taskCollection.doc(task.id).update(task.toMap());
+      log("task_service updating task with taskCollection.doc(task.id).update(task.toMap())");
 
-      // Reprogrammer la notification avec la nouvelle date
+      // Reprogrammation de la notification avec la nouvelle date
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
         title: "Mise à jour: ${task.title}",
         body: "Votre tâche \"${task.title}\" a été mise à jour.",
         taskDate: task.startDate,
+        typeNotification: "update"
       );
-      log("Notification scheduled for ${task.title}");
-      log("taskDate: ${task.startDate}");
+      log("Notification scheduled for updated task with new start date: ${task.startDate}");
+
     } catch (e) {
-      log('Error updating task: $e');
+      log("Error updating task : $e");
       throw Exception("Failed to update task: $e");
     }
   }
+
+
 
   Future<void> deleteTask(String id) async {
     try {
       // Annuler la notification liée à cette tâche avant de la supprimer
       await notificationService.cancelNotification(id.hashCode);
-
       await taskCollection.doc(id).delete();
       log('Task deleted successfully');
     } catch (e) {
       log('Error deleting task: $e');
+      throw Exception("Failed to delete task: $e");
     }
   }
 
-  Future<void> deleteTasksForDeletedUsers() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      try {
-        final users = await FirebaseFirestore.instance.collection('users').get();
-        final userIds = users.docs.map((doc) => doc.id).toSet();
-
-        final tasks = await taskCollection.get();
-        for (var task in tasks.docs) {
-          final taskData = task.data();
-          if (taskData is Map<String, dynamic>) {
-            if (!userIds.contains(taskData['userId'])) {
-              await task.reference.delete();
-              log('Deleted task for user that no longer exists: ${task.id}');
-            }
-          }
-        }
-      } catch (e) {
-        log('Error deleting tasks for deleted users: $e');
-      }
-    } else {
-      throw Exception("User not authenticated");
-    }
-  }
   Stream<List<Task>> getTasks() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -90,6 +110,7 @@ class TaskService {
           .orderBy('startDate', descending: true)
           .snapshots()
           .map((snapshot) {
+            log("task_service.dart task in taskCollection : ${taskCollection}");
         return snapshot.docs.map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>)).toList();
       });
     } else {
