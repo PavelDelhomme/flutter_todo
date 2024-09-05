@@ -64,12 +64,19 @@ class SettingsViewState extends State<SettingsView> {
           final taskData = taskDoc.data();
           final Task task = Task.fromMap(taskData);
 
+
+          // Récupérer les nouveaux paramètres utilisateur
+          DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
+          Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
+
+
           await notificationService.scheduleNotification(
             id: task.id.hashCode,
             title: "Démarrage de la tâche ${task.title}",
             body: "${task.title} commence maintenant",
             taskDate: task.startDate,
             typeNotification: "start",
+            reminderTime: userSettings["reminderTime"],
           );
 
           await notificationService.scheduleNotification(
@@ -78,6 +85,7 @@ class SettingsViewState extends State<SettingsView> {
             body: "${task.title} commence bientôt",
             taskDate: task.startDate,
             typeNotification: "reminder",
+            reminderTime: userSettings["reminderTime"],
           );
         }
 
@@ -159,7 +167,7 @@ class SettingsViewState extends State<SettingsView> {
                 title: const Text('Rappel avant la tâche (minutes)'),
                 trailing: DropdownButton<int>(
                   value: _reminderTime,
-                  items: [5, 10, 15, 30, 60]
+                  items: [5, 10, 15, 20, 30, 40, 45, 50, 55, 60]
                       .map((int value) => DropdownMenuItem<int>(
                     value: value,
                     child: Text(value.toString()),

@@ -6,6 +6,7 @@ import '../services/notification_service.dart';
 
 class TaskService {
   final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
+  final CollectionReference userSettingsCollection = FirebaseFirestore.instance.collection('userSettings');
 
   Future<void> addTask(Task task) async {
     try {
@@ -21,6 +22,10 @@ class TaskService {
       await taskCollection.doc(task.id).set(task.toMap());
       log("Task added with id: ${task.id}");
 
+      // Récupérer les nouveaux paramètres utilisateur
+      DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
+      Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
+
       // Planifier la notification de démarrage de la tâche
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
@@ -28,6 +33,7 @@ class TaskService {
         body: "Votre tâche \"${task.title}\" commence bientôt.",
         taskDate: task.startDate,
         typeNotification: 'start',
+        reminderTime: userSettings["reminderTime"],
       );
     } catch (e) {
       throw Exception('Failed to add task: $e');
@@ -56,6 +62,11 @@ class TaskService {
       log("task_service : updateTask : task.id : ${task.id}");
       log("task_service : updateTask : task.id.hashCode : ${task.id.hashCode}");
 
+      // Récupérer les paramètre utilisateur de reminder de notification
+      DocumentSnapshot userSettingsSnapshot = await userSettingsCollection.doc(user.uid).get();
+      log("task_service : updateTask : userSettingsSnapshot : ${userSettingsSnapshot}");
+      log("task_service : updateTask : userSettingsSnapshot.data : ${userSettingsSnapshot.data()}");
+
       if (!documentSnapshot.exists) {
         log("task_service : updateTask : Task with id ${task.id} does not exist in Firestore.");
         throw Exception("Task does not exist");
@@ -72,13 +83,18 @@ class TaskService {
       await taskCollection.doc(task.id).update(task.toMap());
       log("task_service updating task with taskCollection.doc(task.id).update(task.toMap())");
 
+
+      // Récupérer les nouveaux paramètres utilisateur
+      DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(FirebaseAuth.instance.currentUser?.uid).get();
+
       // Reprogrammation de la notification avec la nouvelle date
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
         title: "Mise à jour: ${task.title}",
         body: "Votre tâche \"${task.title}\" a été mise à jour.",
         taskDate: task.startDate,
-        typeNotification: "update"
+        typeNotification: "update",
+        reminderTime: userSettingsDoc["reminderTime"],
       );
       log("Notification scheduled for updated task with new start date: ${task.startDate}");
 

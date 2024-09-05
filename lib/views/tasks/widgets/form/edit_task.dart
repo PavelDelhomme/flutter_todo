@@ -244,6 +244,12 @@ class EditTaskScreenState extends State<EditTaskScreen> {
         await taskService.updateTask(task);
       }
 
+      // Récupérer les nouveaux paramètres utilisateur
+      DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(userId).get();
+      Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
+      log("edit_task.dart : userSettingsDoc : ${userSettingsDoc}");
+      log("edit_task.dart : userSettings the map of data : ${userSettings.toString()}");
+
       // Notif démarrage
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
@@ -251,6 +257,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
         body: "${task.title} commence maintenant",
         taskDate: task.startDate,
         typeNotification: "start",
+        reminderTime: userSettings["reminderTime"],
       );
       // Notif de rappel
       await notificationService.scheduleNotification(
@@ -259,11 +266,12 @@ class EditTaskScreenState extends State<EditTaskScreen> {
         body: "${task.title} commence bientôt",
         taskDate: task.startDate,
         typeNotification: "reminder",
+        reminderTime: userSettings["reminderTime"],
       );
 
       Navigator.pop(context);
     } catch (e) {
-      log("Erreur lors de l'ajout ou de la mise à jour de la tâche : $e");
+      log("edit_task.dart : Erreur lors de l'ajout ou de la mise à jour de la tâche : $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text("Erreur lors de l'enregistrement de la tâche $e")),
