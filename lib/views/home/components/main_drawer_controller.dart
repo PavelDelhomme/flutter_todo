@@ -5,13 +5,13 @@ import '../../settings/settings_view.dart';
 import '../../tasks/widgets/list/tasks.dart';
 
 class MainDrawerController extends StatefulWidget {
-  const MainDrawerController({Key? key}) : super(key: key);
+  const MainDrawerController({super.key});
 
   @override
-  _MainDrawerControllerState createState() => _MainDrawerControllerState();
+  MainDrawerControllerState createState() => MainDrawerControllerState();
 }
 
-class _MainDrawerControllerState extends State<MainDrawerController> {
+class MainDrawerControllerState extends State<MainDrawerController> {
   String _currentTitle = 'Tâches';
   Widget _currentScreen = const TasksList();
 
@@ -37,13 +37,13 @@ class _MainDrawerControllerState extends State<MainDrawerController> {
               accountEmail: Text(user?.email ?? "Aucun email"),
               currentAccountPicture: GestureDetector(
                 onTap: () {
-                  _selectScreen('Profil', SettingsView());
+                  _selectScreen('Profil', const SettingsView());
                 },
                 child: CircleAvatar(
                   child: Text((user?.displayName?.isEmpty ?? true) ? '?' : user!.displayName!.substring(0, 1)),
                 ),
               ),
-              decoration: BoxDecoration(color: Colors.blue),
+              decoration: const BoxDecoration(color: Colors.blue),
             ),
             ListTile(
               leading: const Icon(Icons.list),

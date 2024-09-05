@@ -10,10 +10,10 @@ class TaskDetailsScreen extends StatefulWidget {
   const TaskDetailsScreen({super.key, required this.taskId});
 
   @override
-  _TaskDetailsScreenState createState() => _TaskDetailsScreenState();
+  TaskDetailsScreenState createState() => TaskDetailsScreenState();
 }
 
-class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
+class TaskDetailsScreenState extends State<TaskDetailsScreen> {
 
   Future<DocumentSnapshot> _fetchTaskData() async {
     return await FirebaseFirestore.instance.collection('tasks').doc(widget.taskId).get();

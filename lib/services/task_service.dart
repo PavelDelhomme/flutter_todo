@@ -110,7 +110,7 @@ class TaskService {
           .orderBy('startDate', descending: true)
           .snapshots()
           .map((snapshot) {
-            log("task_service.dart task in taskCollection : ${taskCollection}");
+            log("task_service.dart task in taskCollection : $taskCollection");
         return snapshot.docs.map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>)).toList();
       });
     } else {

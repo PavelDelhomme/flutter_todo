@@ -9,10 +9,10 @@ class InscriptionView extends StatefulWidget {
   const InscriptionView({super.key});
 
   @override
-  _InscriptionViewState createState() => _InscriptionViewState();
+  InscriptionViewState createState() => InscriptionViewState();
 }
 
-class _InscriptionViewState extends State<InscriptionView> {
+class InscriptionViewState extends State<InscriptionView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();

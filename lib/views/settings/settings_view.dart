@@ -11,10 +11,10 @@ class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
 
   @override
-  _SettingsViewState createState() => _SettingsViewState();
+  SettingsViewState createState() => SettingsViewState();
 }
 
-class _SettingsViewState extends State<SettingsView> {
+class SettingsViewState extends State<SettingsView> {
   bool _reminderEnabled = false;
   int _reminderTime = 10; // Default reminder time in minutes
   String _userEmail = '';
@@ -38,8 +38,8 @@ class _SettingsViewState extends State<SettingsView> {
           _reminderTime = doc['reminderTime'] ?? 10;
         });
       }
-      log("Settings for reminder : reminderEnabled ${_reminderEnabled}");
-      log("Settings for reminder : reminderTime ${_reminderTime}");
+      log("Settings for reminder : reminderEnabled $_reminderEnabled");
+      log("Settings for reminder : reminderTime $_reminderTime");
     }
   }
   Future<void> _saveSettings() async {
@@ -82,7 +82,7 @@ class _SettingsViewState extends State<SettingsView> {
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Paramètres enregistrés avec succès")),
+          const SnackBar(content: Text("Paramètres enregistrés avec succès")),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -97,7 +97,7 @@ class _SettingsViewState extends State<SettingsView> {
 
     if (_formKey.currentState!.validate() && user != null) {
       try {
-        await user.updateEmail(_userEmail);
+        await user.verifyBeforeUpdateEmail(_userEmail);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Email mis à jour avec succès'),

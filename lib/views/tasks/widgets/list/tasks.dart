@@ -10,7 +10,7 @@ import 'package:todo_firebase/views/tasks/widgets/list/task_widget.dart';
 import '../form/edit_task.dart';
 
 class TasksList extends StatelessWidget {
-  const TasksList({Key? key}) : super(key: key);
+  const TasksList({super.key});
 
   String formatDateTime(DateTime? dateTime) {
     return dateTime != null ? DateFormat('EEE d MMM yyyy à HH:mm').format(dateTime) : CustomStr.noReminder;

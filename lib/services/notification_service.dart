@@ -136,16 +136,16 @@ class NotificationService {
       log("Reminders are disabled; no notification will be scheduled.");
     }*/
     final userSettings = await _getUserNotificationSettings();
-    log("notification_service : scheduleNotification : Contenu userSettings ${userSettings}");
+    log("notification_service : scheduleNotification : Contenu userSettings $userSettings");
 
     if (userSettings['reminderEnabled'] == true && typeNotification == "reminder") {
       final reminderTime = userSettings['reminderTime'] as int;
       final reminderDate = taskDate.subtract(Duration(minutes: reminderTime));
 
       log(
-          "notification_service : scheduleNotification : Notification scheduled for task at : ${taskDate}");
+          "notification_service : scheduleNotification : Notification scheduled for task at : $taskDate");
       log(
-          "notification_service : scheduleNotification : Reminder set for : ${reminderDate}");
+          "notification_service : scheduleNotification : Reminder set for : $reminderDate");
 
       final scheduledTZDateTime = tz.TZDateTime.from(reminderDate, tz.local);
       log(
@@ -165,7 +165,7 @@ class NotificationService {
             priority: Priority.high,
           ),
         ),
-        androidAllowWhileIdle: true,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation
             .absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
@@ -191,7 +191,7 @@ class NotificationService {
             priority: Priority.high,
           ),
         ),
-        androidAllowWhileIdle: true,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
       );
@@ -211,7 +211,7 @@ class NotificationService {
             priority: Priority.high,
           ),
         ),
-        androidAllowWhileIdle: true,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
       );

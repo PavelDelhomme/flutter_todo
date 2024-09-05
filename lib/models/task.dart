@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:hive/hive.dart';
 import 'package:uuid/uuid.dart';
 
@@ -57,7 +56,7 @@ class Task {
       notes: map['notes'] ?? '',
       priorityLevel: map['priorityLevel'] ?? 'Neutre',
       startDate: (map['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      endDate: (map['endDate'] as Timestamp?)?.toDate() ?? DateTime.now().add(Duration(hours: 1)),
+      endDate: (map['endDate'] as Timestamp?)?.toDate() ?? DateTime.now().add(const Duration(hours: 1)),
       userId: map['userId'], // Ne pas assigner l'utilisateur connecté ici, mais bien récupérer le `userId` du document Firestore
       isCompleted: map['isCompleted'] ?? false,
     );

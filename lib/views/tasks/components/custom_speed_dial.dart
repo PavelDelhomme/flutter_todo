@@ -5,9 +5,9 @@ class CustomSpeedDial extends StatelessWidget {
   final List<SpeedDialChild> children;
 
   const CustomSpeedDial({
-    Key? key,
+    super.key,
     required this.children,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -11,13 +11,13 @@ import '../../../../services/task_service.dart';
 class EditTaskScreen extends StatefulWidget {
   final String taskId;
 
-  const EditTaskScreen({Key? key, required this.taskId}) : super(key: key);
+  const EditTaskScreen({super.key, required this.taskId});
 
   @override
-  _EditTaskScreenState createState() => _EditTaskScreenState();
+  EditTaskScreenState createState() => EditTaskScreenState();
 }
 
-class _EditTaskScreenState extends State<EditTaskScreen> {
+class EditTaskScreenState extends State<EditTaskScreen> {
   final _formKey = GlobalKey<FormState>();
   String titleField = '';
   String subtitleField = '';
@@ -224,11 +224,11 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     Map<String, dynamic> taskData = {
       'id': taskId,
       'title': titleField.isNotEmpty ? titleField : 'Tâche sans titre',
-      'subtitle': subtitleField ?? '',
+      'subtitle': subtitleField,
       'notes': notesField ?? '',
       'priorityLevel': priorityLevelField.isNotEmpty ? priorityLevelField : 'Neutre',
       'startDate': Timestamp.fromDate(startDate ?? DateTime.now()),
-      'endDate': Timestamp.fromDate(endDate ?? DateTime.now().add(Duration(hours: 1))),
+      'endDate': Timestamp.fromDate(endDate ?? DateTime.now().add(const Duration(hours: 1))),
       'userId': userId,
       'isCompleted': false,
     };
