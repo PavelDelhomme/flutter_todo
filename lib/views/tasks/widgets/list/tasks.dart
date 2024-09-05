@@ -53,6 +53,8 @@ class TasksList extends StatelessWidget {
                 onDismissed: () async {
                   await _deleteTask(docs[index].id);
                   ScaffoldMessenger.of(context).showSnackBar(
+                  //todo Unhandled Exception : Looking up a deactivated widget's ancestor is unsafe.
+                  //todo At this point the state of the
                     const SnackBar(content: Text(CustomStr.deletedTask)),
                   );
                 },

@@ -15,6 +15,7 @@ class Task {
   DateTime endDate;
   String userId;
   bool isCompleted;
+  //todo définir l'état de la tâche pouvoir indiquer si elle est en cours, en retard, terminer, et que cela envoie donc différents notification toujours en fonction de l'état
 
   Task({
     String? id,

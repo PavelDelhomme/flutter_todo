@@ -27,6 +27,7 @@ class TaskService {
         title: "Rappel : ${task.title}",
         body: "Votre tâche \"${task.title}\" commence bientôt.",
         taskDate: task.startDate,
+        typeNotification: 'start',
       );
     } catch (e) {
       throw Exception('Failed to add task: $e');
@@ -77,6 +78,7 @@ class TaskService {
         title: "Mise à jour: ${task.title}",
         body: "Votre tâche \"${task.title}\" a été mise à jour.",
         taskDate: task.startDate,
+        typeNotification: "update"
       );
       log("Notification scheduled for updated task with new start date: ${task.startDate}");
 

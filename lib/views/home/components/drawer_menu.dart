@@ -13,6 +13,15 @@ class DrawerMenu extends StatelessWidget {
     await FirebaseAuth.instance.signOut();
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => const ConnexionView()),
+        (Route<dynamic> route) => false,
+    );
+  }
+  //final VoidCallback onSignOut;
+
+  /*Future<void> _signOut(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const ConnexionView()),
           (Route<dynamic> route) => false,
     );
   }
@@ -25,7 +34,7 @@ class DrawerMenu extends StatelessWidget {
           (Route<dynamic> route) => false,
     );
     log("Déconnexion utilisateur");
-  }*/
+  }*/*/
 
   @override
   Widget build(BuildContext context) {
