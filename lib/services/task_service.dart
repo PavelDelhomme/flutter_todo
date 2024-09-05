@@ -120,6 +120,38 @@ class TaskService {
     }
   }
 
+
+  Future<void> markAsCompleted(String id) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        throw Exception("User not authenticated or found");
+      }
+
+      DocumentSnapshot documentSnapshot = await taskCollection.doc(id).get();
+
+      if (!documentSnapshot.exists) {
+        throw Exception("Task doesn't exist");
+      }
+
+      Map<String, dynamic> taskData = documentSnapshot.data() as Map<String, dynamic>;
+
+      if (taskData['userId'] != user.uid) {
+        throw Exception("User does not have permission to complete this task");
+      }
+
+      await notificationService.cancelNotification(id.hashCode);
+      await notificationService.cancelNotification(id.hashCode + 1); // Rappel
+
+      await taskCollection.doc(id).update({"isCompleted": true});
+      log("Task ${taskData['id']} marked as completed successfully");
+    } catch (e) {
+      log("Errror marking task as completed : $e");
+      throw Exception("Failed to mark task as completed: $e");
+    }
+  }
+
   Stream<List<Task>> getTasks() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
