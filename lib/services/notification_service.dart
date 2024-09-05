@@ -91,6 +91,8 @@ class NotificationService {
         // Annule uniquement les notifications dont la date de début est dans le futur
         await notificationService.cancelNotification(task.id.hashCode);
         log("Notification future annulée pour la tâche : ${task.title}");
+      } else {
+        log("Notification pour la tâche ${task.title} est déjà passé, aucune annulation.");
       }
     }
   }
@@ -262,15 +264,19 @@ class NotificationService {
 
     for (var task in tasks) {
       if (task.startDate.isAfter(now)) {
+        int reminderTime = userSettings['reminderTime'] ?? 10;
+
         await notificationService.scheduleNotification(
           id: task.id.hashCode,
           title: "Rappel : ${task.title}",
           body: "Votre tâche \"${task.title}\" commence bientôt.",
           taskDate: task.startDate,
-          typeNotification: "start",
-          reminderTime: userSettings['reminderTime'],
+          typeNotification: "reminder",
+          reminderTime: reminderTime,
         );
         log("Notification programmée pour la tâche future : ${task.title}");
+      } else {
+        log("La tâche ${task.title} est déjà passée, aucune notification programmée.");
       }
     }
   }

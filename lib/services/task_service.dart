@@ -26,6 +26,8 @@ class TaskService {
       DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
       Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
 
+      int reminderTime = userSettings['reminderTime'] ?? 10;
+
       // Planifier la notification de démarrage de la tâche
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
@@ -33,7 +35,7 @@ class TaskService {
         body: "Votre tâche \"${task.title}\" commence bientôt.",
         taskDate: task.startDate,
         typeNotification: 'start',
-        reminderTime: userSettings["reminderTime"],
+        reminderTime: reminderTime,
       );
     } catch (e) {
       throw Exception('Failed to add task: $e');
