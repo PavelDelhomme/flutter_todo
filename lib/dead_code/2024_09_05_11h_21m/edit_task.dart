@@ -263,7 +263,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         id: task.id.hashCode,
         title: "Tâche ${task.title} à démarrer",
         body: "${task.title} doit commencer à ${task.startDate}",
-        taskDate: task.startDate,
+        taskDate: task.startDate, typeNotification: 'start',
       );
       log("_saveOrUpdateTask : _saveOrUpdateTask : Starting notification planned");
       log("_saveOrUpdateTask : _saveOrUpdateTask : Planning reminder notification for task");
@@ -272,7 +272,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         id: task.id.hashCode + 1,
         title: "${task.title} à venir",
         body: "${task.title} commence dans 10 minutes.",
-        taskDate: task.startDate.subtract(const Duration(minutes: 10)), // todo rajouter la récupération du délais de reminder définit par utilisateur dans ces paramètres
+        taskDate: task.startDate.subtract(const Duration(minutes: 10)), typeNotification: 'reminder', // todo rajouter la récupération du délais de reminder définit par utilisateur dans ces paramètres
       );
       log("_saveOrUpdateTask : _saveOrUpdateTask : Reminder notification planned");
 
