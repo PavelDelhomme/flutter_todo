@@ -9,46 +9,57 @@ class Task {
   String id;
   String title;
   String subtitle;
-  bool isCompleted;
+  String notes;
+  String priorityLevel;
   DateTime startDate;
   DateTime endDate;
-  String priorityLevel;
   String userId;
+  bool isCompleted;
+  //todo définir l'état de la tâche pouvoir indiquer si elle est en cours, en retard, terminer, et que cela envoie donc différents notification toujours en fonction de l'état
 
   Task({
     String? id,
     required this.title,
     required this.subtitle,
-    this.isCompleted = false,
+    this.notes = '',
+    this.priorityLevel = 'Neutre',
     required this.startDate,
     required this.endDate,
-    this.priorityLevel = 'Neutre',
     required this.userId,
+    this.isCompleted = false,
   }) : id = id ?? const Uuid().v4();
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'title': title,
-      'subtitle': subtitle,
-      'isCompleted': isCompleted,
-      'startDate': Timestamp.fromDate(startDate),
-      'endDate': Timestamp.fromDate(endDate),
-      'priorityLevel': priorityLevel,
-      'userId': userId,
+  Map<String, dynamic> toMap({bool excludeId = false}) {
+    final map = {
+      'id': id, // OK Firebase
+      'title': title, // OK Firebase
+      'subtitle': subtitle, // OK Firebase
+      'notes': notes, // Okay Firebase
+      'priorityLevel': priorityLevel, // OK Firebase
+      'startDate': Timestamp.fromDate(startDate), // OK Firebase
+      'endDate': Timestamp.fromDate(endDate), // OK Firebase
+      'userId': userId, // Ok Firebase
+      'isCompleted': isCompleted, // Ok Firebase
     };
+
+    if (!excludeId) {
+      map['id'] = id;
+    }
+
+    return map;
   }
 
   static Task fromMap(Map<String, dynamic> map) {
     return Task(
       id: map['id'] ?? const Uuid().v4(),
-      title: map['title'] ?? '',  // Provide a default value to avoid null errors
+      title: map['title'] ?? '',
       subtitle: map['subtitle'] ?? '',
-      isCompleted: map['isCompleted'] ?? false,
-      startDate: (map['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(), // Use the current date if null
-      endDate: (map['endDate'] as Timestamp?)?.toDate() ?? DateTime.now().add(Duration(hours: 1)),
+      notes: map['notes'] ?? '',
       priorityLevel: map['priorityLevel'] ?? 'Neutre',
-      userId: map['userId'] ?? FirebaseAuth.instance.currentUser!.uid,
+      startDate: (map['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      endDate: (map['endDate'] as Timestamp?)?.toDate() ?? DateTime.now().add(Duration(hours: 1)),
+      userId: map['userId'], // Ne pas assigner l'utilisateur connecté ici, mais bien récupérer le `userId` du document Firestore
+      isCompleted: map['isCompleted'] ?? false,
     );
   }
 

@@ -213,60 +213,74 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   Future<void> _saveOrUpdateTask() async {
-    if (!_formKey.currentState!.validate()) return;
-
+    if (!_formKey.currentState!.validate()) {
+      log("edit_task : _saveOrUpdateTask : !_formKey.currentState!.validate() == true");
+      return;
+    }
     _formKey.currentState!.save();
+
     final userId = FirebaseAuth.instance.currentUser!.uid;
+    log("edit_task : _saveOrUpdateTask : userId : $userId");
 
     final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
-    String taskId = widget.taskId.isEmpty ? taskCollection.doc().id : widget.taskId; // Création d'un nouvel id si la tâche n'existe pas et n'est pas trouvé dans la collection
+    log("edit_task : _saveOrUpdateTask : taskCollection : $taskCollection");
+
+    String taskId = widget.taskId.isEmpty ? taskCollection.doc().id : widget.taskId;
+    log("edit_task : _saveOrUpdateTask : widget.taskId : $taskId");
 
     Map<String, dynamic> taskData = {
       'id': taskId,
-      'title': titleField.isNotEmpty ? titleField : 'Tâche sans titre',
+      'title': titleField.isNotEmpty ? titleField : 'Tâche sans titre', // Default to "Tâche sans titre" if title is empty
       'subtitle': subtitleField ?? '',
       'notes': notesField ?? '',
       'priorityLevel': priorityLevelField.isNotEmpty ? priorityLevelField : 'Neutre',
-      'startDate': Timestamp.fromDate(startDate ?? DateTime.now()),
+      'startDate': Timestamp.fromDate(startDate ?? DateTime.now()), // Default to now if startDate is null
       'endDate': Timestamp.fromDate(endDate ?? DateTime.now().add(Duration(hours: 1))),
       'userId': userId,
       'isCompleted': false,
     };
 
+    log("edit_task.dart : _saveOrUpdateTask : taskData attempt to edit: ${taskData}");
+
+
     try {
       final task = Task.fromMap(taskData);
+      log("edit_task.dart : _saveOrUpdateTask : task fromMap(taskData) : $task");
 
-      if (widget.taskId.isEmpty) {
-        // Create task
-        await taskService.addTask(task);
-      } else {
-        // Update task
+      if (widget.taskId.isNotEmpty) {
         await taskService.updateTask(task);
+        log("edit_task.dart : _saveOrUpdateTask : Updating task with data : $taskData");
+        log("New data for task : ${task}");
+      } else {
+        await taskService.addTask(task);
+        log("_saveOrUpdateTask : _saveOrUpdateTask : Adding task with data : ${task.toMap()}");
       }
 
-      // Notif démarrage
+      // Plannification de la notification de démarrage de la tâche avec le service associé
+      // Notification de démarrage
+      log("_saveOrUpdateTask : _saveOrUpdateTask : Planning starting notification for task");
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
-        title: "Démarrage de la tâche ${task.title}",
-        body: "${task.title} commence maintenant",
-        taskDate: task.startDate,
-        typeNotification: "start",
+        title: "Tâche ${task.title} à démarrer",
+        body: "${task.title} doit commencer à ${task.startDate}",
+        taskDate: task.startDate, typeNotification: 'start',
       );
-      // Notif de rappel
+      log("_saveOrUpdateTask : _saveOrUpdateTask : Starting notification planned");
+      log("_saveOrUpdateTask : _saveOrUpdateTask : Planning reminder notification for task");
+      // Notification de rappel
       await notificationService.scheduleNotification(
-        id: task.id.hashCode+1,
-        title: "Rappel de la tâche ${task.title}",
-        body: "${task.title} commence bientôt",
-        taskDate: task.startDate,
-        typeNotification: "reminder",
+        id: task.id.hashCode + 1,
+        title: "${task.title} à venir",
+        body: "${task.title} commence dans 10 minutes.",
+        taskDate: task.startDate.subtract(const Duration(minutes: 10)), typeNotification: 'reminder', // todo rajouter la récupération du délais de reminder définit par utilisateur dans ces paramètres
       );
+      log("_saveOrUpdateTask : _saveOrUpdateTask : Reminder notification planned");
 
       Navigator.pop(context);
     } catch (e) {
       log("Erreur lors de l'ajout ou de la mise à jour de la tâche : $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text("Erreur lors de l'enregistrement de la tâche $e")),
+        SnackBar(content: Text("Erreur lors de l'enregistrement de la tâche : $e")),
       );
     }
   }

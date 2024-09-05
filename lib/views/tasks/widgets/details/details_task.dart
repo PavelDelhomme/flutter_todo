@@ -105,6 +105,15 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Text(
+                      data['notes'] ?? '',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal, fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                ),
               ],
             ),
           );

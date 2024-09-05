@@ -5,7 +5,7 @@ class CustomStr {
   static const String addNote = "Ajouter une notes";
   static const String timeString = "Heure";
   static const String dateString = "Date";
-  
+
   // Actions
   static const String addNewTask = "Ajouter une tâche";
   static const String deleteTask = "Supprimer la tâche";
