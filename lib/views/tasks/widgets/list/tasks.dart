@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_firebase/models/task.dart';
+import 'package:todo_firebase/services/task_service.dart';
 import 'package:todo_firebase/utils/custom_str.dart';
 import 'package:todo_firebase/views/tasks/widgets/list/task_widget.dart';
 
@@ -59,8 +60,17 @@ class TasksList extends StatelessWidget {
                   );
                 },
                 onMarkedComplete: () async {
-                  task.isCompleted = !task.isCompleted;
-                  await FirebaseFirestore.instance.collection('tasks').doc(docs[index].id).update({'isCompleted': task.isCompleted});
+                  if(!task.isCompleted) {
+                    await taskService.markAsCompleted(task.id);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Tâche marquée comme terminée.")),
+                    );
+                  } else {
+                    await taskService.markAsNotCompleted(task.id);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Cette tâche est déjà terminée.")),
+                    );
+                  }
                 },
               );
             },

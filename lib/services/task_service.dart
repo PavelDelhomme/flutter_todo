@@ -152,6 +152,53 @@ class TaskService {
     }
   }
 
+  Future<void> markAsNotCompleted(String id) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        throw Exception("User not authenticated");
+      }
+
+      DocumentSnapshot documentSnapshot = await taskCollection.doc(id).get();
+
+      if (!documentSnapshot.exists) {
+        throw Exception("Task doesn't exist");
+      }
+
+      Map<String, dynamic> taskData = documentSnapshot.data() as Map<String, dynamic>;
+
+      if (taskData['userId'] != user.uid) {
+        throw Exception("User does not have permission to update this task");
+      }
+
+      // Annuler les notifications si besoin (si des notifications doivent être réactivées pour une tâche non terminée)
+      await taskCollection.doc(id).update({"isCompleted": false});
+      log("Task ${taskData['id']} marked as not completed");
+
+      // Reprogrammer la notifications
+      DocumentSnapshot userSettingsDoc = await userSettingsCollection.doc(user.uid).get();
+      Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
+      int reminderTime = userSettings['reminderTime'] ?? 10;
+
+      // Reprogrammation des notifications si la tâche n'est pas terminée
+      DateTime startDate = (taskData['startDate'] as Timestamp).toDate();
+      await notificationService.scheduleNotification(
+        id: id.hashCode,
+        title: "Rappel : ${taskData['title']}",
+        body: "Votre tâche \"${taskData['title']}\" commence bientôt.",
+        taskDate: startDate,
+        typeNotification: 'start',
+        reminderTime: reminderTime,
+      );
+      log("Task ${taskData['id']} marked as not completed and notifications rescheduled.");
+    } catch (e) {
+      log("Error marking task as not completed: $e");
+      throw Exception("Failed to mark task as not completed: $e");
+    }
+  }
+
+
   Stream<List<Task>> getTasks() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
