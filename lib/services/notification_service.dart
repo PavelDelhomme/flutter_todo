@@ -58,6 +58,18 @@ class NotificationService {
     log("Notification with id $id canceled");
   }
 
+  Future<void> cancelAllNotificationsForUser() async {
+    final tasks = await FirebaseFirestore.instance.collection('tasks')
+        .where('userId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+        .get();
+
+    for (var task in tasks.docs) {
+      final taskIdHash = task['id'].hashCode;
+      await cancelNotification(taskIdHash); // Annule démarrage
+      await cancelNotification(taskIdHash + 1); // Annule rappel
+    }
+  }
+
 
   Future<Map<String, dynamic>> _getUserNotificationSettings() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -79,6 +91,7 @@ class NotificationService {
     required String title,
     required String body,
     required DateTime taskDate,
+    required String typeNotification, // type 'reminder' ou 'start'
   }) async {
     /*
     final userSettings = await _getUserNotificationSettings();
@@ -125,15 +138,18 @@ class NotificationService {
     final userSettings = await _getUserNotificationSettings();
     log("notification_service : scheduleNotification : Contenu userSettings ${userSettings}");
 
-    if (userSettings['reminderEnabled']) {
+    if (userSettings['reminderEnabled'] == true && typeNotification == "reminder") {
       final reminderTime = userSettings['reminderTime'] as int;
       final reminderDate = taskDate.subtract(Duration(minutes: reminderTime));
 
-      log("notification_service : scheduleNotification : Notification scheduled for task at : ${taskDate}");
-      log("notification_service : scheduleNotification : Reminder set for : ${reminderDate}");
+      log(
+          "notification_service : scheduleNotification : Notification scheduled for task at : ${taskDate}");
+      log(
+          "notification_service : scheduleNotification : Reminder set for : ${reminderDate}");
 
       final scheduledTZDateTime = tz.TZDateTime.from(reminderDate, tz.local);
-      log("notification_service : scheduleNotification : Scheduling notification : $title at $scheduledTZDateTime");
+      log(
+          "notification_service : scheduleNotification : Scheduling notification : $title at $scheduledTZDateTime");
 
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         id,
@@ -142,9 +158,35 @@ class NotificationService {
         scheduledTZDateTime,
         const NotificationDetails(
           android: AndroidNotificationDetails(
-              'task_reminder',
-              'Task Reminder',
-            channelDescription: 'Reminder de tâche',
+            'task_reminder',
+            'Task Reminder',
+            channelDescription: 'Rappel de tâche',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+        ),
+        androidAllowWhileIdle: true,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation
+            .absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+      ).then((value) =>
+          log(
+              "Notification scheduled successfully: $title at $scheduledTZDateTime"))
+          .catchError((error) {
+        log("Error scheduling notification: $error");
+      });
+    } else if (typeNotification == "start") {
+      final scheduledTZDateTime = tz.TZDateTime.from(taskDate, tz.local);
+      await _flutterLocalNotificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledTZDateTime,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'task_start',
+            'Task Start',
+            channelDescription: 'Démarrage de tâche',
             importance: Importance.max,
             priority: Priority.high,
           ),
@@ -152,12 +194,27 @@ class NotificationService {
         androidAllowWhileIdle: true,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
-      ).then((value) => log("Notification scheduled successfully: $title at $scheduledTZDateTime"))
-          .catchError((error) {
-        log("Error scheduling notification: $error");
-      });
-    } else {
-      log("Reminders are disabled; no notification will be scheduled.");
+      );
+    } else if (typeNotification == "update") {
+      final scheduledTZDateTime = tz.TZDateTime.from(tz.TZDateTime.now(tz.local), tz.local);
+      await _flutterLocalNotificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        scheduledTZDateTime,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'task_start',
+            'Task Start',
+            channelDescription: 'Mise à jour de la tâche',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+        ),
+        androidAllowWhileIdle: true,
+        uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+        matchDateTimeComponents: DateTimeComponents.time,
+      );
     }
   }
 

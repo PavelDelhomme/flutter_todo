@@ -213,18 +213,13 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   Future<void> _saveOrUpdateTask() async {
-    if (!_formKey.currentState!.validate()) {
-      log("edit_task : _saveOrUpdateTask : !_formKey.currentState!.validate() == true");
-      return;
-    }
-    _formKey.currentState!.save();
+    if (!_formKey.currentState!.validate()) return;
 
+    _formKey.currentState!.save();
     final userId = FirebaseAuth.instance.currentUser!.uid;
-    log("edit_task : _saveOrUpdateTask : userId : $userId");
 
     final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
     String taskId = widget.taskId.isEmpty ? taskCollection.doc().id : widget.taskId; // Création d'un nouvel id si la tâche n'existe pas et n'est pas trouvé dans la collection
-    log("edit_task : _saveOrUpdateTask : widget.taskId : $taskId");
 
     Map<String, dynamic> taskData = {
       'id': taskId,
@@ -238,36 +233,32 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       'isCompleted': false,
     };
 
-    log("edit_task.dart : _saveOrUpdateTask : taskData attempt to edit: ${taskData}");
-
-
     try {
       final task = Task.fromMap(taskData);
 
       if (widget.taskId.isEmpty) {
         // Create task
         await taskService.addTask(task);
-        log("edit_task.dart : _saveOrUpdateTask : Task created with data : ${task.toMap()}");
       } else {
         // Update task
         await taskService.updateTask(task);
-        log("edit_task.dart : _saveOrUpdateTask : Task updated with data : ${task.toMap()}");
       }
 
-      // Plannification de la notification de démarrage de la  tâche avec le service de notificatoin
-      log("_saveOrUpdateTask : _saveOrUpdateTask : Planning starting notification for task");
+      // Notif démarrage
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
-        title: "Tâche ${task.title} à démarrer",
-        body: "${task.title} doit commencer à ${task.startDate}",
+        title: "Démarrage de la tâche ${task.title}",
+        body: "${task.title} commence maintenant",
         taskDate: task.startDate,
+        typeNotification: "start",
       );
-
+      // Notif de rappel
       await notificationService.scheduleNotification(
-        id: task.id.hashCode + 1,
-        title: "${task.title} à venir",
-        body: "${task.title} commence dans 10 minutes",
-        taskDate: task.startDate.subtract(const Duration(minutes: 10)),
+        id: task.id.hashCode+1,
+        title: "Rappel de la tâche ${task.title}",
+        body: "${task.title} commence bientôt",
+        taskDate: task.startDate,
+        typeNotification: "reminder",
       );
 
       Navigator.pop(context);
