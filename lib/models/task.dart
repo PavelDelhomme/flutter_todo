@@ -30,7 +30,7 @@ class Task {
 
   Map<String, dynamic> toMap({bool excludeId = false}) {
     final map = {
-      //'id': id, // OK Firebase
+      'id': id, // OK Firebase
       'title': title, // OK Firebase
       'subtitle': subtitle, // OK Firebase
       'notes': notes, // Okay Firebase

@@ -47,11 +47,15 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   Future<void> loadInitialData() async {
+    log("edit_task : loadInitialData : taskId received in widget : ${widget.taskId}");
     try {
       DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection("tasks").doc(widget.taskId).get();
+      log("edit_task : loadInitialData : snapshot correctly retrieved");
       var data = snapshot.data() as Map<String, dynamic>?;
+      log("edit_task : loadInitialData : data from snapshot : $data");
 
       if (data != null) {
+        log("edit_task : loadInitialdata : data not null retrieve older data known");
         setState(() {
           titleField = data['title'] ?? '';
           subtitleField = data['subtitle'] ?? '';
@@ -210,13 +214,22 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
 
   Future<void> _saveOrUpdateTask() async {
     if (!_formKey.currentState!.validate()) {
+      log("edit_task : _saveOrUpdateTask : !_formKey.currentState!.validate() == true");
       return;
     }
     _formKey.currentState!.save();
 
     final userId = FirebaseAuth.instance.currentUser!.uid;
+    log("edit_task : _saveOrUpdateTask : userId : $userId");
+
+    final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
+    log("edit_task : _saveOrUpdateTask : taskCollection : $taskCollection");
+
+    DocumentSnapshot task_to_save = await taskCollection.doc(widget.taskId).get();
+    log("edit_task : _saveOrUpdateTask : task_to_save : $task_to_save");
 
     Map<String, dynamic> taskData = {
+      'id': task_to_save.id,
       'title': titleField.isNotEmpty ? titleField : 'Tâche sans titre', // Default to "Tâche sans titre" if title is empty
       'subtitle': subtitleField ?? '',
       'notes': notesField ?? '',
@@ -227,27 +240,33 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       'isCompleted': false,
     };
 
-    log("edit_task.dart : TaskData attempt to edit: ${taskData}");
+    log("edit_task.dart : _saveOrUpdateTask : taskData attempt to edit: ${taskData}");
 
 
     try {
       final task = Task.fromMap(taskData);
+      log("edit_task.dart : _saveOrUpdateTask : task fromMap(taskData) : $task");
 
       if (widget.taskId.isNotEmpty) {
         await taskService.updateTask(task);
+        log("edit_task.dart : _saveOrUpdateTask : Updating task with data : $taskData");
+        log("New data for task : ${task}");
       } else {
         await taskService.addTask(task);
-        log("Adding task with data : ${task.toMap()}");
+        log("_saveOrUpdateTask : _saveOrUpdateTask : Adding task with data : ${task.toMap()}");
       }
 
       // Plannification de la notification de démarrage de la tâche avec le service associé
       // Notification de démarrage
+      log("_saveOrUpdateTask : _saveOrUpdateTask : Planning starting notification for task");
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
         title: "Tâche ${task.title} à démarrer",
         body: "${task.title} doit commencer à ${task.startDate}",
         taskDate: task.startDate,
       );
+      log("_saveOrUpdateTask : _saveOrUpdateTask : Starting notification planned");
+      log("_saveOrUpdateTask : _saveOrUpdateTask : Planning reminder notification for task");
       // Notification de rappel
       await notificationService.scheduleNotification(
         id: task.id.hashCode + 1,
@@ -255,6 +274,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         body: "${task.title} commence dans 10 minutes.",
         taskDate: task.startDate.subtract(const Duration(minutes: 10)), // todo rajouter la récupération du délais de reminder définit par utilisateur dans ces paramètres
       );
+      log("_saveOrUpdateTask : _saveOrUpdateTask : Reminder notification planned");
 
       Navigator.pop(context);
     } catch (e) {

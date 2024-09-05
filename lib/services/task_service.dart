@@ -52,6 +52,8 @@ class TaskService {
 
       // Récupérer le document de Firestore
       DocumentSnapshot documentSnapshot = await taskCollection.doc(task.id).get();
+      log("task_service : updateTask : task.id : ${task.id}");
+      log("task_service : updateTask : task.id.hashCode : ${task.id.hashCode}");
 
       if (!documentSnapshot.exists) {
         log("task_service : updateTask : Task with id ${task.id} does not exist in Firestore.");
