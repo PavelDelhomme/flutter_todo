@@ -8,6 +8,8 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
 
+import '../models/task.dart';
+
 class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
@@ -70,6 +72,42 @@ class NotificationService {
     }
   }
 
+  Future<void> cancelFuturesNotifications(List<Task> tasks) async {
+    DateTime now = DateTime.now();
+
+    for (var task in tasks) {
+      if (task.startDate.isAfter(now)) {
+        await notificationService.cancelNotification(task.id.hashCode);
+        log("notification_service : Notification future annulée pour la tâche: ${task.id} - ${task.title}");
+      }
+    }
+  }
+
+  Future<void> cancelFutureNotifications(List<Task> tasks) async {
+    DateTime now = DateTime.now();
+
+    for (var task in tasks) {
+      if (task.startDate.isAfter(now)) {
+        // Annule uniquement les notifications dont la date de début est dans le futur
+        await notificationService.cancelNotification(task.id.hashCode);
+        log("Notification future annulée pour la tâche : ${task.title}");
+      } else {
+        log("Notification pour la tâche ${task.title} est déjà passé, aucune annulation.");
+      }
+    }
+  }
+
+  Future<void> cancelUserFutureNotifications(String userId) async {
+    final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
+    QuerySnapshot querySnapshot = await taskCollection.where('userId', isEqualTo: userId).get();
+
+    List<Task> tasks = querySnapshot.docs.map((doc) {
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      return Task.fromMap(data);
+    }).toList();
+
+    await cancelFutureNotifications(tasks);
+  }
 
   Future<Map<String, dynamic>> _getUserNotificationSettings() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -92,6 +130,7 @@ class NotificationService {
     required String body,
     required DateTime taskDate,
     required String typeNotification, // type 'reminder' ou 'start'
+    required int reminderTime,
   }) async {
     /*
     final userSettings = await _getUserNotificationSettings();
@@ -136,16 +175,16 @@ class NotificationService {
       log("Reminders are disabled; no notification will be scheduled.");
     }*/
     final userSettings = await _getUserNotificationSettings();
-    log("notification_service : scheduleNotification : Contenu userSettings ${userSettings}");
+    log("notification_service : scheduleNotification : Contenu userSettings $userSettings");
 
     if (userSettings['reminderEnabled'] == true && typeNotification == "reminder") {
       final reminderTime = userSettings['reminderTime'] as int;
       final reminderDate = taskDate.subtract(Duration(minutes: reminderTime));
 
       log(
-          "notification_service : scheduleNotification : Notification scheduled for task at : ${taskDate}");
+          "notification_service : scheduleNotification : Notification scheduled for task at : $taskDate");
       log(
-          "notification_service : scheduleNotification : Reminder set for : ${reminderDate}");
+          "notification_service : scheduleNotification : Reminder set for : $reminderDate");
 
       final scheduledTZDateTime = tz.TZDateTime.from(reminderDate, tz.local);
       log(
@@ -165,7 +204,7 @@ class NotificationService {
             priority: Priority.high,
           ),
         ),
-        androidAllowWhileIdle: true,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation
             .absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
@@ -175,7 +214,8 @@ class NotificationService {
           .catchError((error) {
         log("Error scheduling notification: $error");
       });
-    } else if (typeNotification == "start") {
+    }
+    else if (typeNotification == "start") {
       final scheduledTZDateTime = tz.TZDateTime.from(taskDate, tz.local);
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         id,
@@ -191,11 +231,12 @@ class NotificationService {
             priority: Priority.high,
           ),
         ),
-        androidAllowWhileIdle: true,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
       );
-    } else if (typeNotification == "update") {
+    }
+    else if (typeNotification == "update") {
       final scheduledTZDateTime = tz.TZDateTime.from(tz.TZDateTime.now(tz.local), tz.local);
       await _flutterLocalNotificationsPlugin.zonedSchedule(
         id,
@@ -211,11 +252,53 @@ class NotificationService {
             priority: Priority.high,
           ),
         ),
-        androidAllowWhileIdle: true,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
       );
     }
+  }
+
+  Future<void> scheduleFutureNotifications(List<Task> tasks, Map<String, dynamic> userSettings) async {
+    DateTime now = DateTime.now();
+
+    for (var task in tasks) {
+      if (task.startDate.isAfter(now)) {
+        int reminderTime = userSettings['reminderTime'] ?? 10;
+
+        await notificationService.scheduleNotification(
+          id: task.id.hashCode,
+          title: "Rappel : ${task.title}",
+          body: "Votre tâche \"${task.title}\" commence bientôt.",
+          taskDate: task.startDate,
+          typeNotification: "reminder",
+          reminderTime: reminderTime,
+        );
+        log("Notification programmée pour la tâche future : ${task.title}");
+      } else {
+        log("La tâche ${task.title} est déjà passée, aucune notification programmée.");
+      }
+    }
+  }
+  Future<void> updateUserNotifications(String userId) async {
+    // Annuler les notifications futures
+    await cancelUserFutureNotifications(userId);
+
+    // Récupérer les nouveaux paramètres utilisateur
+    DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(userId).get();
+    Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
+
+    // Récupérer toutes les tâches de l'utilisateur
+    final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
+    QuerySnapshot querySnapshot = await taskCollection.where('userId', isEqualTo: userId).get();
+
+    List<Task> tasks = querySnapshot.docs.map((doc) {
+      Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+      return Task.fromMap(data);
+    }).toList();
+
+    // Programmer les notifications futures avec les nouveaux paramètres
+    await scheduleFutureNotifications(tasks, userSettings);
   }
 
   Future<void> showNotification({

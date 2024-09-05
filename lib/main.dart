@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -25,7 +27,7 @@ void main() async {
   try {
     await notificationService.initialize();
   } catch (e) {
-    print('Error initializing notification service: $e');
+    log('Error initializing notification service: $e');
   }
 
   runApp(const MainApp());

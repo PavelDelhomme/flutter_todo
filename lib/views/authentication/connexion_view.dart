@@ -10,12 +10,12 @@ class ConnexionView extends StatefulWidget {
   const ConnexionView({super.key});
 
   @override
-  _ConnexionViewState createState() => _ConnexionViewState();
+  ConnexionViewState createState() => ConnexionViewState();
 }
 
 //TODO: La connexion ne se fait a la première entrée des identifiants de l'utilisateur il faut qu'il les entre 2 fois ?
 
-class _ConnexionViewState extends State<ConnexionView> {
+class ConnexionViewState extends State<ConnexionView> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();

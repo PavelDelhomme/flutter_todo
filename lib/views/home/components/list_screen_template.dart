@@ -6,11 +6,11 @@ class ListScreenTemplate extends StatelessWidget {
   final Widget? floatingActionButton;
 
   const ListScreenTemplate({
-    Key? key,
+    super.key,
     required this.child,
     required this.title,
     this.floatingActionButton,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

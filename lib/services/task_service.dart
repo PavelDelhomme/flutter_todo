@@ -6,6 +6,7 @@ import '../services/notification_service.dart';
 
 class TaskService {
   final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
+  final CollectionReference userSettingsCollection = FirebaseFirestore.instance.collection('userSettings');
 
   Future<void> addTask(Task task) async {
     try {
@@ -21,6 +22,12 @@ class TaskService {
       await taskCollection.doc(task.id).set(task.toMap());
       log("Task added with id: ${task.id}");
 
+      // Récupérer les nouveaux paramètres utilisateur
+      DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
+      Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
+
+      int reminderTime = userSettings['reminderTime'] ?? 10;
+
       // Planifier la notification de démarrage de la tâche
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
@@ -28,6 +35,7 @@ class TaskService {
         body: "Votre tâche \"${task.title}\" commence bientôt.",
         taskDate: task.startDate,
         typeNotification: 'start',
+        reminderTime: reminderTime,
       );
     } catch (e) {
       throw Exception('Failed to add task: $e');
@@ -56,6 +64,11 @@ class TaskService {
       log("task_service : updateTask : task.id : ${task.id}");
       log("task_service : updateTask : task.id.hashCode : ${task.id.hashCode}");
 
+      // Récupérer les paramètre utilisateur de reminder de notification
+      DocumentSnapshot userSettingsSnapshot = await userSettingsCollection.doc(user.uid).get();
+      log("task_service : updateTask : userSettingsSnapshot : ${userSettingsSnapshot}");
+      log("task_service : updateTask : userSettingsSnapshot.data : ${userSettingsSnapshot.data()}");
+
       if (!documentSnapshot.exists) {
         log("task_service : updateTask : Task with id ${task.id} does not exist in Firestore.");
         throw Exception("Task does not exist");
@@ -72,13 +85,18 @@ class TaskService {
       await taskCollection.doc(task.id).update(task.toMap());
       log("task_service updating task with taskCollection.doc(task.id).update(task.toMap())");
 
+
+      // Récupérer les nouveaux paramètres utilisateur
+      DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(FirebaseAuth.instance.currentUser?.uid).get();
+
       // Reprogrammation de la notification avec la nouvelle date
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
         title: "Mise à jour: ${task.title}",
         body: "Votre tâche \"${task.title}\" a été mise à jour.",
         taskDate: task.startDate,
-        typeNotification: "update"
+        typeNotification: "update",
+        reminderTime: userSettingsDoc["reminderTime"],
       );
       log("Notification scheduled for updated task with new start date: ${task.startDate}");
 
@@ -102,6 +120,85 @@ class TaskService {
     }
   }
 
+
+  Future<void> markAsCompleted(String id) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        throw Exception("User not authenticated or found");
+      }
+
+      DocumentSnapshot documentSnapshot = await taskCollection.doc(id).get();
+
+      if (!documentSnapshot.exists) {
+        throw Exception("Task doesn't exist");
+      }
+
+      Map<String, dynamic> taskData = documentSnapshot.data() as Map<String, dynamic>;
+
+      if (taskData['userId'] != user.uid) {
+        throw Exception("User does not have permission to complete this task");
+      }
+
+      await notificationService.cancelNotification(id.hashCode);
+      await notificationService.cancelNotification(id.hashCode + 1); // Rappel
+
+      await taskCollection.doc(id).update({"isCompleted": true});
+      log("Task ${taskData['id']} marked as completed successfully");
+    } catch (e) {
+      log("Errror marking task as completed : $e");
+      throw Exception("Failed to mark task as completed: $e");
+    }
+  }
+
+  Future<void> markAsNotCompleted(String id) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        throw Exception("User not authenticated");
+      }
+
+      DocumentSnapshot documentSnapshot = await taskCollection.doc(id).get();
+
+      if (!documentSnapshot.exists) {
+        throw Exception("Task doesn't exist");
+      }
+
+      Map<String, dynamic> taskData = documentSnapshot.data() as Map<String, dynamic>;
+
+      if (taskData['userId'] != user.uid) {
+        throw Exception("User does not have permission to update this task");
+      }
+
+      // Annuler les notifications si besoin (si des notifications doivent être réactivées pour une tâche non terminée)
+      await taskCollection.doc(id).update({"isCompleted": false});
+      log("Task ${taskData['id']} marked as not completed");
+
+      // Reprogrammer la notifications
+      DocumentSnapshot userSettingsDoc = await userSettingsCollection.doc(user.uid).get();
+      Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
+      int reminderTime = userSettings['reminderTime'] ?? 10;
+
+      // Reprogrammation des notifications si la tâche n'est pas terminée
+      DateTime startDate = (taskData['startDate'] as Timestamp).toDate();
+      await notificationService.scheduleNotification(
+        id: id.hashCode,
+        title: "Rappel : ${taskData['title']}",
+        body: "Votre tâche \"${taskData['title']}\" commence bientôt.",
+        taskDate: startDate,
+        typeNotification: 'start',
+        reminderTime: reminderTime,
+      );
+      log("Task ${taskData['id']} marked as not completed and notifications rescheduled.");
+    } catch (e) {
+      log("Error marking task as not completed: $e");
+      throw Exception("Failed to mark task as not completed: $e");
+    }
+  }
+
+
   Stream<List<Task>> getTasks() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -110,7 +207,7 @@ class TaskService {
           .orderBy('startDate', descending: true)
           .snapshots()
           .map((snapshot) {
-            log("task_service.dart task in taskCollection : ${taskCollection}");
+            log("task_service.dart task in taskCollection : $taskCollection");
         return snapshot.docs.map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>)).toList();
       });
     } else {

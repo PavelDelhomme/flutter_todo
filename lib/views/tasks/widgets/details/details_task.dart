@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../../services/task_service.dart';
 import '../form/edit_task.dart';
 
 class TaskDetailsScreen extends StatefulWidget {
@@ -10,10 +11,10 @@ class TaskDetailsScreen extends StatefulWidget {
   const TaskDetailsScreen({super.key, required this.taskId});
 
   @override
-  _TaskDetailsScreenState createState() => _TaskDetailsScreenState();
+  TaskDetailsScreenState createState() => TaskDetailsScreenState();
 }
 
-class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
+class TaskDetailsScreenState extends State<TaskDetailsScreen> {
 
   Future<DocumentSnapshot> _fetchTaskData() async {
     return await FirebaseFirestore.instance.collection('tasks').doc(widget.taskId).get();
@@ -96,11 +97,22 @@ class _TaskDetailsScreenState extends State<TaskDetailsScreen> {
                     ),
                     Checkbox(
                       value: isCompleted,
-                      onChanged: (bool? value) {
+                      onChanged: (bool? value) async {
                         setState(() {
                           isCompleted = value ?? false;
                         });
-                        FirebaseFirestore.instance.collection('tasks').doc(widget.taskId).update({'isCompleted': value});
+
+                        await FirebaseFirestore.instance
+                            .collection('tasks')
+                            .doc(widget.taskId)
+                            .update({'isCompleted': value});
+
+                        if (value == true) {
+                          await taskService.markAsCompleted(widget.taskId);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Tâche marquée comme complète')),
+                          );
+                        }
                       },
                     ),
                   ],
