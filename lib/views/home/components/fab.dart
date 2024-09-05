@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AddTaskFab extends StatelessWidget {
   final VoidCallback onPressed;
 
-  const AddTaskFab({Key? key, required this.onPressed}) : super(key: key);
+  const AddTaskFab({super.key, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {

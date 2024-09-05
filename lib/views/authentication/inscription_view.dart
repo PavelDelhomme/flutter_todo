@@ -1,12 +1,12 @@
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../models/user.dart';
 import '../home/home_view.dart';
 
 class InscriptionView extends StatefulWidget {
-  const InscriptionView({Key? key}) : super(key: key);
+  const InscriptionView({super.key});
 
   @override
   _InscriptionViewState createState() => _InscriptionViewState();
@@ -20,6 +20,7 @@ class _InscriptionViewState extends State<InscriptionView> {
   final _auth = FirebaseAuth.instance;
   bool _isLoading = false;
 
+
   Future<void> _signUp() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() {
@@ -31,15 +32,18 @@ class _InscriptionViewState extends State<InscriptionView> {
           password: _passwordController.text.trim(),
         );
 
-        // Add user to Firestore
-        await _db.collection('users').doc(userCredential.user!.uid).set({
-          'email': _emailController.text.trim(),
-          'createdAt': Timestamp.now(),
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Inscription réussie et connexion établie")),
+        UserModel newUser = UserModel(
+          id: userCredential.user!.uid,
+          email: _emailController.text.trim(),
+          name: '', // Collect user's name if needed
         );
+
+        await _db.collection('users').doc(newUser.id).set(newUser.toMap());
+
+        await _db.collection('userSettings').doc(userCredential.user!.uid).set({
+          'reminderEnabled': false,
+          'reminderTime': 10,
+        });
 
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),
@@ -54,7 +58,6 @@ class _InscriptionViewState extends State<InscriptionView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage)),
         );
-        log("Error : ${e.message}");
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Échec de l\'inscription : $e')),
@@ -66,6 +69,7 @@ class _InscriptionViewState extends State<InscriptionView> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
