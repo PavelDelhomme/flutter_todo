@@ -162,7 +162,7 @@ class SettingsViewState extends State<SettingsView> {
 
   Future<void> _stopService() async {
     final service = FlutterBackgroundService();
-    await service.invoke("stopService");
+    service.invoke("stopService");
     setState(() {
       _serviceRunning = false;
     });
