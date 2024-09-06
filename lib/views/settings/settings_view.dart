@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:todo_firebase/services/notification_service.dart';
 
 import '../../models/task.dart';
@@ -19,12 +20,14 @@ class SettingsViewState extends State<SettingsView> {
   int _reminderTime = 10; // Default reminder time in minutes
   String _userEmail = '';
   String _userPassword = '';
+  bool _serviceRunning = false; // Pour indiquer si le service est en cours d'exécution
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
     _loadSettings();
+    _checkServiceStatus(); // Vérifie si le service est en cours d'exécution
   }
 
   Future<void> _loadSettings() async {
@@ -42,6 +45,7 @@ class SettingsViewState extends State<SettingsView> {
       log("Settings for reminder : reminderTime $_reminderTime");
     }
   }
+
   Future<void> _saveSettings() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -64,11 +68,9 @@ class SettingsViewState extends State<SettingsView> {
           final taskData = taskDoc.data();
           final Task task = Task.fromMap(taskData);
 
-
           // Récupérer les nouveaux paramètres utilisateur
           DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
           Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
-
 
           await notificationService.scheduleNotification(
             id: task.id.hashCode,
@@ -146,9 +148,41 @@ class SettingsViewState extends State<SettingsView> {
     }
   }
 
+  // Méthodes pour démarrer et arrêter le service de fond
+  Future<void> _startService() async {
+    final service = FlutterBackgroundService();
+    await service.startService();
+    setState(() {
+      _serviceRunning = true;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Service de fond démarré")),
+    );
+  }
+
+  Future<void> _stopService() async {
+    final service = FlutterBackgroundService();
+    await service.invoke("stopService");
+    setState(() {
+      _serviceRunning = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Service de fond arrêté")),
+    );
+  }
+
+  Future<void> _checkServiceStatus() async {
+    final service = FlutterBackgroundService();
+    bool isRunning = await service.isRunning();
+    setState(() {
+      _serviceRunning = isRunning;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: const Text('Paramètres')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
@@ -187,6 +221,29 @@ class SettingsViewState extends State<SettingsView> {
               onPressed: _saveSettings,
               child: const Text('Enregistrer'),
             ),
+            const Divider(
+              height: 40,
+              thickness: 2.5,
+              indent: 20,
+              endIndent: 20,
+              color: Colors.deepPurple,
+            ),
+            const Text(
+              "Paramètres du service de fond",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            SwitchListTile(
+              title: const Text('Service de fond'),
+              value: _serviceRunning,
+              onChanged: (bool value) {
+                if (value) {
+                  _startService();
+                } else {
+                  _stopService();
+                }
+              },
+            ),
+            const SizedBox(height: 20),
             const Divider(
               height: 40,
               thickness: 2.5,
