@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:todo_firebase/services/notification_service.dart';
 
-import '../../models/task.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -19,6 +18,7 @@ class SettingsViewState extends State<SettingsView> {
   int _reminderTime = 10; // Default reminder time in minutes
   String _userEmail = '';
   String _userPassword = '';
+  bool _isLoading = true; // Ajout d'un indicateur de chargement
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -38,10 +38,12 @@ class SettingsViewState extends State<SettingsView> {
           _reminderTime = doc['reminderTime'] ?? 10;
         });
       }
-      log("Settings for reminder : reminderEnabled $_reminderEnabled");
-      log("Settings for reminder : reminderTime $_reminderTime");
     }
+    setState(() {
+      _isLoading = false;
+    });
   }
+
   Future<void> _saveSettings() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -53,42 +55,8 @@ class SettingsViewState extends State<SettingsView> {
           'reminderTime': _reminderTime,
         });
 
-        // Annuler et reprogrammer toutes les notifications pour les tâches existantes
-        await notificationService.cancelAllNotificationsForUser();
-
-        final taskSnapshot = await FirebaseFirestore.instance.collection('tasks')
-            .where('userId', isEqualTo: user.uid)
-            .get();
-
-        for (var taskDoc in taskSnapshot.docs) {
-          final taskData = taskDoc.data();
-          final Task task = Task.fromMap(taskData);
-
-
-          // Récupérer les nouveaux paramètres utilisateur
-          DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
-          Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
-
-
-          await notificationService.scheduleNotification(
-            id: task.id.hashCode,
-            title: "Démarrage de la tâche ${task.title}",
-            body: "${task.title} commence maintenant",
-            taskDate: task.startDate,
-            typeNotification: "start",
-            reminderTime: userSettings["reminderTime"],
-          );
-
-          await notificationService.scheduleNotification(
-            id: task.id.hashCode + 1,
-            title: "Rappel de la tâche ${task.title}",
-            body: "${task.title} commence bientôt",
-            taskDate: task.startDate,
-            typeNotification: "reminder",
-            reminderTime: userSettings["reminderTime"],
-          );
-        }
-
+        // Mise à jour des notifications pour toutes les tâches après modification des paramètres
+        await notificationService.updateNotificationsForUser(user.uid);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Paramètres enregistrés avec succès")),
         );
