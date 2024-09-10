@@ -247,27 +247,8 @@ class EditTaskScreenState extends State<EditTaskScreen> {
       // Récupérer les nouveaux paramètres utilisateur
       DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(userId).get();
       Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
-      log("edit_task.dart : userSettingsDoc : ${userSettingsDoc}");
-      log("edit_task.dart : userSettings the map of data : ${userSettings.toString()}");
-
-      // Notif démarrage
-      await notificationService.scheduleNotification(
-        id: task.id.hashCode,
-        title: "Démarrage de la tâche ${task.title}",
-        body: "${task.title} commence maintenant",
-        taskDate: task.startDate,
-        typeNotification: "start",
-        reminderTime: userSettings["reminderTime"],
-      );
-      // Notif de rappel
-      await notificationService.scheduleNotification(
-        id: task.id.hashCode+1,
-        title: "Rappel de la tâche ${task.title}",
-        body: "${task.title} commence bientôt",
-        taskDate: task.startDate,
-        typeNotification: "reminder",
-        reminderTime: userSettings["reminderTime"],
-      );
+      // Mise à jour des notifications après modification de la tâche
+      await notificationService.updateNotifications(userSettings);
 
       Navigator.pop(context);
     } catch (e) {
