@@ -5,8 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:todo_firebase/services/notification_service.dart';
 
-import '../../models/task.dart';
-
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
 
@@ -19,6 +17,7 @@ class SettingsViewState extends State<SettingsView> {
   int _reminderTime = 10; // Default reminder time in minutes
   String _userEmail = '';
   String _userPassword = '';
+  bool _isLoading = true;
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -38,63 +37,30 @@ class SettingsViewState extends State<SettingsView> {
           _reminderTime = doc['reminderTime'] ?? 10;
         });
       }
-      log("Settings for reminder : reminderEnabled $_reminderEnabled");
-      log("Settings for reminder : reminderTime $_reminderTime");
     }
+    setState(() {
+      _isLoading = false;
+    });
   }
-  Future<void> _saveSettings() async {
+
+  Future<void> _updateReminderSettings(bool reminderEnabled, int reminderTime) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      final settingsDocRef = FirebaseFirestore.instance.collection('userSettings').doc(user.uid);
-
       try {
-        await settingsDocRef.set({
-          'reminderEnabled': _reminderEnabled,
-          'reminderTime': _reminderTime,
-        });
+        // Sauvegarde immédiate des paramètres de rappel
+        await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).set({
+          'reminderEnabled': reminderEnabled,
+          'reminderTime': reminderTime,
+        }, SetOptions(merge: true));
 
-        // Annuler et reprogrammer toutes les notifications pour les tâches existantes
-        await notificationService.cancelAllNotificationsForUser();
+        // Mise à jour des notifications après modification
+        await notificationService.updateNotificationsForUser(user.uid);
 
-        final taskSnapshot = await FirebaseFirestore.instance.collection('tasks')
-            .where('userId', isEqualTo: user.uid)
-            .get();
-
-        for (var taskDoc in taskSnapshot.docs) {
-          final taskData = taskDoc.data();
-          final Task task = Task.fromMap(taskData);
-
-
-          // Récupérer les nouveaux paramètres utilisateur
-          DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
-          Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
-
-
-          await notificationService.scheduleNotification(
-            id: task.id.hashCode,
-            title: "Démarrage de la tâche ${task.title}",
-            body: "${task.title} commence maintenant",
-            taskDate: task.startDate,
-            typeNotification: "start",
-            reminderTime: userSettings["reminderTime"],
-          );
-
-          await notificationService.scheduleNotification(
-            id: task.id.hashCode + 1,
-            title: "Rappel de la tâche ${task.title}",
-            body: "${task.title} commence bientôt",
-            taskDate: task.startDate,
-            typeNotification: "reminder",
-            reminderTime: userSettings["reminderTime"],
-          );
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Paramètres enregistrés avec succès")),
-        );
+        log("Reminder settings updated: reminderEnabled: $reminderEnabled, reminderTime: $reminderTime");
       } catch (e) {
+        log("Erreur lors de la mise à jour des paramètres de rappel : $e");
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors de l\'enregistrement des paramètres : $e')),
+          SnackBar(content: Text('Erreur lors de la mise à jour des paramètres : $e')),
         );
       }
     }
@@ -149,7 +115,9 @@ class SettingsViewState extends State<SettingsView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Padding(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
@@ -160,6 +128,7 @@ class SettingsViewState extends State<SettingsView> {
                 setState(() {
                   _reminderEnabled = value;
                 });
+                _updateReminderSettings(value, _reminderTime); // Mise à jour en direct
               },
             ),
             if (_reminderEnabled)
@@ -178,15 +147,11 @@ class SettingsViewState extends State<SettingsView> {
                       setState(() {
                         _reminderTime = value;
                       });
+                      _updateReminderSettings(_reminderEnabled, value); // Mise à jour en direct
                     }
                   },
                 ),
               ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveSettings,
-              child: const Text('Enregistrer'),
-            ),
             const Divider(
               height: 40,
               thickness: 2.5,

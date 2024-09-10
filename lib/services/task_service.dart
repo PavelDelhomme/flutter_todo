@@ -18,17 +18,14 @@ class TaskService {
       log("Adding task for user: ${user.uid}");
 
       task.userId = user.uid;
-
       await taskCollection.doc(task.id).set(task.toMap());
       log("Task added with id: ${task.id}");
 
-      // Récupérer les nouveaux paramètres utilisateur
-      DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
+      DocumentSnapshot userSettingsDoc = await userSettingsCollection.doc(user.uid).get();
       Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
-
       int reminderTime = userSettings['reminderTime'] ?? 10;
 
-      // Planifier la notification de démarrage de la tâche
+      // Planifier la notification de démarrage
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
         title: "Rappel : ${task.title}",
@@ -37,71 +34,60 @@ class TaskService {
         typeNotification: 'start',
         reminderTime: reminderTime,
       );
+
+      // Vérifier si la tâche est déjà en retard
+      DateTime now = DateTime.now();
+      if (task.endDate.isBefore(now) && !task.isCompleted) {
+        await notificationService.scheduleOverdueNotification(
+          id: task.id.hashCode + 1,
+          title: "Tâche en retard : ${task.title}",
+          body: "Votre tâche \"${task.title}\" est en retard.",
+        );
+      }
     } catch (e) {
       throw Exception('Failed to add task: $e');
     }
   }
 
-
   Future<void> updateTask(Task task) async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      log("user in updateTask in task_service : $user");
-      log("user.uid in updateTask in task_service : ${user?.uid}");
-
       if (user == null) {
-        log("task_service : updateTask : user == null");
         throw Exception("User not authenticated");
       }
 
       if (task.userId != user.uid) {
-        log("task_service : updateTask : task.userId != user.uid");
-        throw Exception("User does not have permission to update this task. It's not their task.");
+        throw Exception("User does not have permission to update this task.");
       }
 
-      // Récupérer le document de Firestore
-      DocumentSnapshot documentSnapshot = await taskCollection.doc(task.id).get();
-      log("task_service : updateTask : task.id : ${task.id}");
-      log("task_service : updateTask : task.id.hashCode : ${task.id.hashCode}");
-
-      // Récupérer les paramètre utilisateur de reminder de notification
-      DocumentSnapshot userSettingsSnapshot = await userSettingsCollection.doc(user.uid).get();
-      log("task_service : updateTask : userSettingsSnapshot : ${userSettingsSnapshot}");
-      log("task_service : updateTask : userSettingsSnapshot.data : ${userSettingsSnapshot.data()}");
-
-      if (!documentSnapshot.exists) {
-        log("task_service : updateTask : Task with id ${task.id} does not exist in Firestore.");
-        throw Exception("Task does not exist");
-      }
-
-      log("task_service.dart : userId in task_service : ${user.uid}");
-      log("task_service.dart : task data before update: ${documentSnapshot.data()}");
-
-      // Annulation de l'ancienne notification
       await notificationService.cancelNotification(task.id.hashCode);
-      log("Notification canceled for task id: ${task.id.hashCode}");
+      await notificationService.cancelNotification(task.id.hashCode + 1);
 
-      // Mise à jour de la tâche dans Firestore
       await taskCollection.doc(task.id).update(task.toMap());
-      log("task_service updating task with taskCollection.doc(task.id).update(task.toMap())");
+      log("Task updated with id: ${task.id}");
 
+      DocumentSnapshot userSettingsDoc = await userSettingsCollection.doc(user.uid).get();
+      Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
+      int reminderTime = userSettings['reminderTime'] ?? 10;
 
-      // Récupérer les nouveaux paramètres utilisateur
-      DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(FirebaseAuth.instance.currentUser?.uid).get();
-
-      // Reprogrammation de la notification avec la nouvelle date
       await notificationService.scheduleNotification(
         id: task.id.hashCode,
-        title: "Mise à jour: ${task.title}",
+        title: "Mise à jour : ${task.title}",
         body: "Votre tâche \"${task.title}\" a été mise à jour.",
         taskDate: task.startDate,
         typeNotification: "update",
-        reminderTime: userSettingsDoc["reminderTime"],
+        reminderTime: reminderTime,
       );
-      log("Notification scheduled for updated task with new start date: ${task.startDate}");
 
+      DateTime now = DateTime.now();
+      if (task.endDate.isBefore(now) && !task.isCompleted) {
+        await notificationService.scheduleOverdueNotification(
+          id: task.id.hashCode + 1,
+          title: "Tâche en retard : ${task.title}",
+          body: "Votre tâche \"${task.title}\" est en retard.",
+        );
+      }
     } catch (e) {
-      log("Error updating task : $e");
       throw Exception("Failed to update task: $e");
     }
   }
@@ -135,6 +121,7 @@ class TaskService {
         throw Exception("Task doesn't exist");
       }
 
+      /*
       Map<String, dynamic> taskData = documentSnapshot.data() as Map<String, dynamic>;
 
       if (taskData['userId'] != user.uid) {
@@ -146,6 +133,9 @@ class TaskService {
 
       await taskCollection.doc(id).update({"isCompleted": true});
       log("Task ${taskData['id']} marked as completed successfully");
+       */
+      await taskCollection.doc(id).update({"isCompleted": true});
+      log("Task ${id} marked as completed");
     } catch (e) {
       log("Errror marking task as completed : $e");
       throw Exception("Failed to mark task as completed: $e");
@@ -198,6 +188,32 @@ class TaskService {
     }
   }
 
+  Future<void> checkAndHandleOverdueTasks() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final tasksSnapshot = await taskCollection.where('userId', isEqualTo: user.uid).get();
+      DateTime now = DateTime.now();
+
+      for (var taskDoc in tasksSnapshot.docs) {
+        Task task = Task.fromMap(taskDoc.data() as Map<String, dynamic>);
+
+        if (task.endDate.isBefore(now) && !task.isCompleted) {
+          // Tâche en retard et non terminée
+
+          await notificationService.cancelNotification(task.id.hashCode);
+          await notificationService.cancelNotification(task.id.hashCode + 1);
+
+          await notificationService.scheduleOverdueNotification(
+            id: task.id.hashCode + 2,
+            title: "Tâche en retard : ${task.title}",
+            body: "Votre tâche \"${task.title}\" est en retard.",
+          );
+
+          log("Tâche ${task.title} est en retard. Notification envoyée.");
+        }
+      }
+    }
+  }
 
   Stream<List<Task>> getTasks() {
     final user = FirebaseAuth.instance.currentUser;

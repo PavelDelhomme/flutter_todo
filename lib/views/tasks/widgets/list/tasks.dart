@@ -10,9 +10,14 @@ import 'package:todo_firebase/views/tasks/widgets/list/task_widget.dart';
 
 import '../form/edit_task.dart';
 
-class TasksList extends StatelessWidget {
+class TasksList extends StatefulWidget {
   const TasksList({super.key});
 
+  @override
+  State<TasksList> createState() => _TasksListState();
+}
+
+class _TasksListState extends State<TasksList> {
   String formatDateTime(DateTime? dateTime) {
     return dateTime != null ? DateFormat('EEE d MMM yyyy à HH:mm').format(dateTime) : CustomStr.noReminder;
   }
@@ -53,14 +58,18 @@ class TasksList extends StatelessWidget {
                 task: task,
                 onDismissed: () async {
                   await _deleteTask(docs[index].id);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                  //todo Unhandled Exception : Looking up a deactivated widget's ancestor is unsafe.
-                  //todo At this point the state of the
-                    const SnackBar(content: Text(CustomStr.deletedTask)),
-                  );
+
+                  // Utiliser WidgetsBinding pour vérifier si le widget est monté avant d'afficher le SnackBar
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) { // Vérifie si le widget est toujours monté
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Tâche supprimée.")),
+                      );
+                    }
+                  });
                 },
                 onMarkedComplete: () async {
-                  if(!task.isCompleted) {
+                  if (!task.isCompleted) {
                     await taskService.markAsCompleted(task.id);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text("Tâche marquée comme terminée.")),
