@@ -250,7 +250,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
       // Mise à jour des notifications après modification de la tâche
       await notificationService.updateNotifications(userSettings);
 
-      Navigator.pop(context);
+      Navigator.pop(context, task);
     } catch (e) {
       log("edit_task.dart : Erreur lors de l'ajout ou de la mise à jour de la tâche : $e");
       ScaffoldMessenger.of(context).showSnackBar(

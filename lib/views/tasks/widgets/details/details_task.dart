@@ -132,13 +132,18 @@ class TaskDetailsScreenState extends State<TaskDetailsScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
+        onPressed: () async {
+          final updatedTask = await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => EditTaskScreen(taskId: widget.taskId),
             ),
           );
+
+          // Recharger les données si la tâche a été mise à jour
+          if (updatedTask != null) {
+            setState(() {}); // Force un rebuild pour recharger les données
+          }
         },
         backgroundColor: Colors.blue,
         child: const Icon(Icons.edit),
