@@ -6,155 +6,42 @@ import '../services/notification_service.dart';
 
 class TaskService {
   final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
-  final CollectionReference userSettingsCollection = FirebaseFirestore.instance.collection('userSettings');
+  final user = FirebaseAuth.instance.currentUser!;
 
   Future<void> addTask(Task task) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
+    task.userId = user.uid;
+    await taskCollection.doc(task.id).set(task.toMap());
 
-      if (user == null) {
-        throw Exception("User not authenticated");
-      }
-      log("Adding task for user: ${user.uid}");
-
-      task.userId = user.uid;
-
-      await taskCollection.doc(task.id).set(task.toMap());
-      log("Task added with id: ${task.id}");
-
-      // Récupérer les nouveaux paramètres utilisateur
-      DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
-      Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
-
-      int reminderTime = userSettings['reminderTime'] ?? 10;
-
-      // Planifier la notification de démarrage de la tâche
-      await notificationService.scheduleNotification(
-        id: task.id.hashCode,
-        title: "Rappel : ${task.title}",
-        body: "Votre tâche \"${task.title}\" commence bientôt.",
-        taskDate: task.startDate,
-        typeNotification: 'start',
-        reminderTime: reminderTime,
-      );
-    } catch (e) {
-      throw Exception('Failed to add task: $e');
-    }
+    // Mise a jour des notifications pour la nouvelle tâche
+    await notificationService.updateNotificationsForUser(user.uid);
+    log("Task added and notifications updated.");
   }
-
 
   Future<void> updateTask(Task task) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      log("user in updateTask in task_service : $user");
-      log("user.uid in updateTask in task_service : ${user?.uid}");
+    await taskCollection.doc(task.id).update(task.toMap());
 
-      if (user == null) {
-        log("task_service : updateTask : user == null");
-        throw Exception("User not authenticated");
-      }
-
-      if (task.userId != user.uid) {
-        log("task_service : updateTask : task.userId != user.uid");
-        throw Exception("User does not have permission to update this task. It's not their task.");
-      }
-
-      // Récupérer le document de Firestore
-      DocumentSnapshot documentSnapshot = await taskCollection.doc(task.id).get();
-      log("task_service : updateTask : task.id : ${task.id}");
-      log("task_service : updateTask : task.id.hashCode : ${task.id.hashCode}");
-
-      // Récupérer les paramètre utilisateur de reminder de notification
-      DocumentSnapshot userSettingsSnapshot = await userSettingsCollection.doc(user.uid).get();
-      log("task_service : updateTask : userSettingsSnapshot : ${userSettingsSnapshot}");
-      log("task_service : updateTask : userSettingsSnapshot.data : ${userSettingsSnapshot.data()}");
-
-      if (!documentSnapshot.exists) {
-        log("task_service : updateTask : Task with id ${task.id} does not exist in Firestore.");
-        throw Exception("Task does not exist");
-      }
-
-      log("task_service.dart : userId in task_service : ${user.uid}");
-      log("task_service.dart : task data before update: ${documentSnapshot.data()}");
-
-      // Annulation de l'ancienne notification
-      await notificationService.cancelNotification(task.id.hashCode);
-      log("Notification canceled for task id: ${task.id.hashCode}");
-
-      // Mise à jour de la tâche dans Firestore
-      await taskCollection.doc(task.id).update(task.toMap());
-      log("task_service updating task with taskCollection.doc(task.id).update(task.toMap())");
-
-
-      // Récupérer les nouveaux paramètres utilisateur
-      DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(FirebaseAuth.instance.currentUser?.uid).get();
-
-      // Reprogrammation de la notification avec la nouvelle date
-      await notificationService.scheduleNotification(
-        id: task.id.hashCode,
-        title: "Mise à jour: ${task.title}",
-        body: "Votre tâche \"${task.title}\" a été mise à jour.",
-        taskDate: task.startDate,
-        typeNotification: "update",
-        reminderTime: userSettingsDoc["reminderTime"],
-      );
-      log("Notification scheduled for updated task with new start date: ${task.startDate}");
-
-    } catch (e) {
-      log("Error updating task : $e");
-      throw Exception("Failed to update task: $e");
-    }
+    // Mise à jours des notifications
+    await notificationService.updateNotificationsForUser(user.uid);
+    log("Task updated and notifications rescheduled.");
   }
 
-
-
   Future<void> deleteTask(String id) async {
-    try {
-      // Annuler la notification liée à cette tâche avant de la supprimer
-      await notificationService.cancelNotification(id.hashCode);
-      await taskCollection.doc(id).delete();
-      log('Task deleted successfully');
-    } catch (e) {
-      log('Error deleting task: $e');
-      throw Exception("Failed to delete task: $e");
-    }
+    await notificationService.cancelNotification(id.hashCode); // Cancel start notification
+    await notificationService.cancelNotification(id.hashCode + 1); // Cancel reminder notification
+    await taskCollection.doc(id).delete();
+    log("Task deleted and notifications canceled");
   }
 
 
   Future<void> markAsCompleted(String id) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-
-      if (user == null) {
-        throw Exception("User not authenticated or found");
-      }
-
-      DocumentSnapshot documentSnapshot = await taskCollection.doc(id).get();
-
-      if (!documentSnapshot.exists) {
-        throw Exception("Task doesn't exist");
-      }
-
-      Map<String, dynamic> taskData = documentSnapshot.data() as Map<String, dynamic>;
-
-      if (taskData['userId'] != user.uid) {
-        throw Exception("User does not have permission to complete this task");
-      }
-
-      await notificationService.cancelNotification(id.hashCode);
-      await notificationService.cancelNotification(id.hashCode + 1); // Rappel
-
-      await taskCollection.doc(id).update({"isCompleted": true});
-      log("Task ${taskData['id']} marked as completed successfully");
-    } catch (e) {
-      log("Errror marking task as completed : $e");
-      throw Exception("Failed to mark task as completed: $e");
-    }
+    await taskCollection.doc(id).update({"isCompleted": true});
+    await notificationService.cancelNotification(id.hashCode);
+    await notificationService.cancelNotification(id.hashCode + 1);
+    log("Task marked as completed and notifications canceled");
   }
 
   Stream<List<Task>> getTasks() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
+    try {
       return taskCollection
           .where('userId', isEqualTo: user.uid)
           .orderBy('startDate', descending: true)
@@ -163,7 +50,7 @@ class TaskService {
             log("task_service.dart task in taskCollection : $taskCollection");
         return snapshot.docs.map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>)).toList();
       });
-    } else {
+    } catch (e) {
       return Stream.value([]); // Stream vide si non authentifié
     }
   }
