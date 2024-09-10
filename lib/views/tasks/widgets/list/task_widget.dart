@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:todo_firebase/models/task.dart';
 
 import '../details/details_task.dart';
+import '../form/edit_task.dart';
 
 class TaskWidget extends StatelessWidget {
   final Task task;
@@ -23,7 +24,7 @@ class TaskWidget extends StatelessWidget {
   Color _getTaskColor() {
     if (task.isCompleted) {
       return Colors.green.withOpacity(0.6);
-    } else if (task.endDate.isBefore(DateTime.now()) && !task.isCompleted) {
+    } else if (task.endDate.isBefore(DateTime.now())) {
       return Colors.red.withOpacity(0.6);
     } else {
       return Colors.yellow.withOpacity(0.6);
@@ -44,13 +45,11 @@ class TaskWidget extends StatelessWidget {
       child: Dismissible(
         key: Key(task.id),
         background: Container(
-          color: task.isCompleted ? Colors.yellow : Colors.green,
+          color: Colors.green,
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Icon(
-            task.isCompleted ? Icons.close : Icons.check,  // Crois si la tâche est complète, sinon un checkmark
-            color: Colors.white,
-          ),        ),
+          child: const Icon(Icons.edit, color: Colors.white),
+        ),
         secondaryBackground: Container(
           color: Colors.red,
           alignment: Alignment.centerRight,
@@ -59,7 +58,6 @@ class TaskWidget extends StatelessWidget {
         ),
         confirmDismiss: (direction) async {
           if (direction == DismissDirection.endToStart) {
-            // Suppression de la tâche
             return await showDialog(
               context: context,
               builder: (BuildContext context) {
@@ -80,9 +78,13 @@ class TaskWidget extends StatelessWidget {
               },
             );
           } else if (direction == DismissDirection.startToEnd) {
-            // Marquer comme complétée ou non complétée
-            onMarkedComplete();
-            return false; // Empêche le swipe complet, car on veut juste marquer la tâche sans la faire disparaître
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EditTaskScreen(taskId: task.id),
+              ),
+            );
+            return false;
           }
           return false;
         },
@@ -105,7 +107,9 @@ class TaskWidget extends StatelessWidget {
             ],
           ),
           child: ListTile(
-            leading: Container(
+            leading: GestureDetector(
+              onTap: onMarkedComplete,
+              child: Container(
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
@@ -115,6 +119,7 @@ class TaskWidget extends StatelessWidget {
                 ),
                 child: const Icon(Icons.check, color: Colors.white, size: 24),
               ),
+            ),
             title: Padding(
               padding: const EdgeInsets.only(bottom: 5, top: 3),
               child: Text(

@@ -1,9 +1,11 @@
 import 'dart:developer';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:todo_firebase/services/notification_service.dart';
+
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -17,7 +19,7 @@ class SettingsViewState extends State<SettingsView> {
   int _reminderTime = 10; // Default reminder time in minutes
   String _userEmail = '';
   String _userPassword = '';
-  bool _isLoading = true;
+  bool _isLoading = true; // Ajout d'un indicateur de chargement
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -55,12 +57,11 @@ class SettingsViewState extends State<SettingsView> {
 
         // Mise à jour des notifications après modification
         await notificationService.updateNotificationsForUser(user.uid);
-
-        log("Reminder settings updated: reminderEnabled: $reminderEnabled, reminderTime: $reminderTime");
+        log("Reminder settings updated : reminderEnabled : $reminderEnabled, reminderTime : $reminderTime");
       } catch (e) {
         log("Erreur lors de la mise à jour des paramètres de rappel : $e");
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors de la mise à jour des paramètres : $e')),
+          SnackBar(content: Text("Erreur lors de la mise à jour des paramètres : $e")),
         );
       }
     }
@@ -128,7 +129,7 @@ class SettingsViewState extends State<SettingsView> {
                 setState(() {
                   _reminderEnabled = value;
                 });
-                _updateReminderSettings(value, _reminderTime); // Mise à jour en direct
+                _updateReminderSettings(value, _reminderTime);
               },
             ),
             if (_reminderEnabled)
@@ -147,7 +148,7 @@ class SettingsViewState extends State<SettingsView> {
                       setState(() {
                         _reminderTime = value;
                       });
-                      _updateReminderSettings(_reminderEnabled, value); // Mise à jour en direct
+                      _updateReminderSettings(_reminderEnabled, value);
                     }
                   },
                 ),

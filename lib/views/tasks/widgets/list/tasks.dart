@@ -4,20 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_firebase/models/task.dart';
-import 'package:todo_firebase/services/task_service.dart';
 import 'package:todo_firebase/utils/custom_str.dart';
 import 'package:todo_firebase/views/tasks/widgets/list/task_widget.dart';
 
 import '../form/edit_task.dart';
 
-class TasksList extends StatefulWidget {
+class TasksList extends StatelessWidget {
   const TasksList({super.key});
 
-  @override
-  State<TasksList> createState() => _TasksListState();
-}
-
-class _TasksListState extends State<TasksList> {
   String formatDateTime(DateTime? dateTime) {
     return dateTime != null ? DateFormat('EEE d MMM yyyy à HH:mm').format(dateTime) : CustomStr.noReminder;
   }
@@ -58,28 +52,15 @@ class _TasksListState extends State<TasksList> {
                 task: task,
                 onDismissed: () async {
                   await _deleteTask(docs[index].id);
-
-                  // Utiliser WidgetsBinding pour vérifier si le widget est monté avant d'afficher le SnackBar
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) { // Vérifie si le widget est toujours monté
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Tâche supprimée.")),
-                      );
-                    }
-                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    //todo Unhandled Exception : Looking up a deactivated widget's ancestor is unsafe.
+                    //todo At this point the state of the
+                    const SnackBar(content: Text(CustomStr.deletedTask)),
+                  );
                 },
                 onMarkedComplete: () async {
-                  if (!task.isCompleted) {
-                    await taskService.markAsCompleted(task.id);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Tâche marquée comme terminée.")),
-                    );
-                  } else {
-                    await taskService.markAsNotCompleted(task.id);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Cette tâche est déjà terminée.")),
-                    );
-                  }
+                  task.isCompleted = !task.isCompleted;
+                  await FirebaseFirestore.instance.collection('tasks').doc(docs[index].id).update({'isCompleted': task.isCompleted});
                 },
               );
             },

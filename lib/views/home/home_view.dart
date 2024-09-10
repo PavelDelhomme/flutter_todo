@@ -1,8 +1,5 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:todo_firebase/services/task_service.dart';
 import 'package:todo_firebase/views/home/components/drawer_menu.dart';
 import 'package:todo_firebase/views/tasks/widgets/form/edit_task.dart';
 import 'package:todo_firebase/views/tasks/widgets/list/tasks.dart';
@@ -17,21 +14,6 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   String _currentTitle = 'Tâches';
   Widget _currentScreen = const TasksList();
-
-  @override
-  void initState() {
-    super.initState();
-    _checkAndUpdateNotifications();
-  }
-
-  void _checkAndUpdateNotifications() async {
-    try {
-      await taskService.checkAndHandleOverdueTasks();
-      log("_HomeViewState : Notifications vérifiées et mises à jour si nécessaire...");
-    } catch (e) {
-      log("_HomeViewState : Erreur lors de la vérification des notifications");
-    }
-  }
 
   void _selectScreen(String title, Widget screen) {
     setState(() {
