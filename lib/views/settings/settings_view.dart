@@ -113,6 +113,25 @@ class SettingsViewState extends State<SettingsView> {
     }
   }
 
+  Future<String?> _showPasswordDialog(BuildContext context) async {
+    String? currentPassword;
+    return await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog<String>(
+          title: const Text("Réauthentification"),
+          content: TextFormField(
+            obscureText: true,
+            decoration: const InputDecoration(
+              labelText: 'Mot de passe actuel',
+            ),
+            onChanged: (value)
+          )
+        )
+      }
+    )
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

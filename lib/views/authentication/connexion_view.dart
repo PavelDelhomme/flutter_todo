@@ -13,7 +13,6 @@ class ConnexionView extends StatefulWidget {
   ConnexionViewState createState() => ConnexionViewState();
 }
 
-//TODO: La connexion ne se fait a la première entrée des identifiants de l'utilisateur il faut qu'il les entre 2 fois ?
 
 class ConnexionViewState extends State<ConnexionView> {
   final TextEditingController _emailController = TextEditingController();
