@@ -1,11 +1,8 @@
 import 'dart:developer';
-
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:todo_firebase/services/notification_service.dart';
-
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -18,9 +15,7 @@ class SettingsViewState extends State<SettingsView> {
   bool _reminderEnabled = false;
   int _reminderTime = 10; // Default reminder time in minutes
   String _userEmail = '';
-  String _userPassword = '';
   bool _isLoading = true; // Ajout d'un indicateur de chargement
-  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -49,13 +44,11 @@ class SettingsViewState extends State<SettingsView> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
-        // Sauvegarde immédiate des paramètres de rappel
         await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).set({
           'reminderEnabled': reminderEnabled,
           'reminderTime': reminderTime,
         }, SetOptions(merge: true));
 
-        // Mise à jour des notifications après modification
         await notificationService.updateNotificationsForUser(user.uid);
         log("Reminder settings updated : reminderEnabled : $reminderEnabled, reminderTime : $reminderTime");
       } catch (e) {
@@ -67,69 +60,169 @@ class SettingsViewState extends State<SettingsView> {
     }
   }
 
-  Future<void> _changeEmail() async {
-    final user = FirebaseAuth.instance.currentUser;
+  Future<void> _showChangeEmailDialog() async {
+    final emailController = TextEditingController();
+    final currentEmail = FirebaseAuth.instance.currentUser?.email ?? '';
+    final formKey = GlobalKey<FormState>();
 
-    if (_formKey.currentState!.validate() && user != null) {
-      try {
-        await user.verifyBeforeUpdateEmail(_userEmail);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Email mis à jour avec succès'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors de la mise à jour de l\'email : $e'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _changePassword() async {
-    final user = FirebaseAuth.instance.currentUser;
-
-    if (_formKey.currentState!.validate() && user != null) {
-      try {
-        await user.updatePassword(_userPassword);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mot de passe mis à jour avec succès'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur lors de la mise à jour du mot de passe : $e'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
-  Future<String?> _showPasswordDialog(BuildContext context) async {
-    String? currentPassword;
-    return await showDialog<String>(
+    await showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog<String>(
-          title: const Text("Réauthentification"),
-          content: TextFormField(
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Mot de passe actuel',
+        return AlertDialog(
+          title: const Text("Changer l'email"),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  initialValue: currentEmail,
+                  decoration: const InputDecoration(labelText: 'Email actuel'),
+                  enabled: false,
+                ),
+                TextFormField(
+                  controller: emailController,
+                  decoration: const InputDecoration(labelText: 'Nouveau email'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Veuillez entrer un nouvel email';
+                    }
+                    return null;
+                  },
+                ),
+              ],
             ),
-            onChanged: (value)
-          )
-        )
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState?.validate() ?? false) {
+                  await _changeEmail(emailController.text);
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Confirmer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showChangePasswordDialog() async {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Changer le mot de passe"),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: currentPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Mot de passe actuel'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Veuillez entrer votre mot de passe actuel';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: newPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Nouveau mot de passe'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Veuillez entrer un nouveau mot de passe';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: confirmPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(labelText: 'Confirmer le mot de passe'),
+                  validator: (value) {
+                    if (value == null || value != newPasswordController.text) {
+                      return 'Les mots de passe ne correspondent pas';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (formKey.currentState?.validate() ?? false) {
+                  await _changePassword(currentPasswordController.text, newPasswordController.text);
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Confirmer'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _changeEmail(String newEmail) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        await user.updateEmail(newEmail);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email mis à jour avec succès')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la mise à jour de l\'email : $e')),
+        );
       }
-    )
+    }
+  }
+
+  Future<void> _changePassword(String currentPassword, String newPassword) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      try {
+        AuthCredential credential = EmailAuthProvider.credential(
+          email: user.email!,
+          password: currentPassword,
+        );
+
+        await user.reauthenticateWithCredential(credential);
+        await user.updatePassword(newPassword);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mot de passe mis à jour avec succès')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la mise à jour du mot de passe : $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -184,34 +277,14 @@ class SettingsViewState extends State<SettingsView> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    initialValue: _userEmail,
-                    decoration: const InputDecoration(labelText: "Email"),
-                    validator: (value) => value!.isEmpty ? 'Ce champ ne peut être vide' : null,
-                    onChanged: (value) => _userEmail = value,
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    obscureText: true,
-                    decoration: const InputDecoration(labelText: "Nouveau mot de passe"),
-                    validator: (value) => value!.isEmpty ? 'Ce champ ne peut être vide' : null,
-                    onChanged: (value) => _userPassword = value,
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: _changeEmail,
-                    child: const Text('Changer l\'email'),
-                  ),
-                  ElevatedButton(
-                    onPressed: _changePassword,
-                    child: const Text('Changer le mot de passe'),
-                  ),
-                ],
-              ),
+            ElevatedButton(
+              onPressed: _showChangeEmailDialog,
+              child: const Text('Changer l\'email'),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _showChangePasswordDialog,
+              child: const Text('Changer le mot de passe'),
             ),
           ],
         ),

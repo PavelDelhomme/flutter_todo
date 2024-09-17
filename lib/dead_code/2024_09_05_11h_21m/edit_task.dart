@@ -11,7 +11,7 @@ import '../../../../services/task_service.dart';
 class EditTaskScreen extends StatefulWidget {
   final String taskId;
 
-  const EditTaskScreen({Key? key, required this.taskId}) : super(key: key);
+  const EditTaskScreen({super.key, required this.taskId});
 
   @override
   _EditTaskScreenState createState() => _EditTaskScreenState();
@@ -235,12 +235,12 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       'notes': notesField ?? '',
       'priorityLevel': priorityLevelField.isNotEmpty ? priorityLevelField : 'Neutre',
       'startDate': Timestamp.fromDate(startDate ?? DateTime.now()), // Default to now if startDate is null
-      'endDate': Timestamp.fromDate(endDate ?? DateTime.now().add(Duration(hours: 1))),
+      'endDate': Timestamp.fromDate(endDate ?? DateTime.now().add(const Duration(hours: 1))),
       'userId': userId,
       'isCompleted': false,
     };
 
-    log("edit_task.dart : _saveOrUpdateTask : taskData attempt to edit: ${taskData}");
+    log("edit_task.dart : _saveOrUpdateTask : taskData attempt to edit: $taskData");
 
 
     try {
@@ -250,7 +250,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       if (widget.taskId.isNotEmpty) {
         await taskService.updateTask(task);
         log("edit_task.dart : _saveOrUpdateTask : Updating task with data : $taskData");
-        log("New data for task : ${task}");
+        log("New data for task : $task");
       } else {
         await taskService.addTask(task);
         log("_saveOrUpdateTask : _saveOrUpdateTask : Adding task with data : ${task.toMap()}");
