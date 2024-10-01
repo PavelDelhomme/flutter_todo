@@ -6,22 +6,37 @@ import '../services/notification_service.dart';
 
 class TaskService {
   final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
-  final user = FirebaseAuth.instance.currentUser!;
 
   Future<void> addTask(Task task) async {
+    // Récupérer l'utilisateur actuel
+    final User? user = FirebaseAuth.instance.currentUser;
+
+
+
+    if (user == null) {
+      log("task_service : Erreur: l'utilisateur n'est pas authentifié.");
+      throw FirebaseAuthException(
+        code: "USER_NOT_AUTHENTICATED",
+        message: "L'utilisateur n'est pas authentifié."
+      );
+    }
+    // Assigner l'UID de l'utilisateur à la tâche
     task.userId = user.uid;
+
+    // Enregistrement de la tâche dans Firestore
     await taskCollection.doc(task.id).set(task.toMap());
 
     // Mise a jour des notifications pour la nouvelle tâche
     await notificationService.updateNotificationsForUser(user.uid);
-    log("Task added and notifications updated.");
+    log("Tâche ajoutée et notifications mise à jour.");
   }
 
   Future<void> updateTask(Task task) async {
+    final User? user = FirebaseAuth.instance.currentUser;
     await taskCollection.doc(task.id).update(task.toMap());
 
     // Mise à jours des notifications
-    await notificationService.updateNotificationsForUser(user.uid);
+    await notificationService.updateNotificationsForUser(user!.uid);
     log("Task updated and notifications rescheduled.");
   }
 
@@ -41,18 +56,20 @@ class TaskService {
   }
 
   Stream<List<Task>> getTasks() {
-    try {
-      return taskCollection
-          .where('userId', isEqualTo: user.uid)
-          .orderBy('startDate', descending: true)
-          .snapshots()
-          .map((snapshot) {
-        log("task_service.dart task in taskCollection : $taskCollection");
-        return snapshot.docs.map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>)).toList();
-      });
-    } catch (e) {
-      return Stream.value([]); // Stream vide si non authentifié
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      log("Erreur : L'utilisateur n'est pas authentifié.");
+      return Stream.value([]);
     }
+
+    return taskCollection
+        .where('userId', isEqualTo: user.uid)
+        .orderBy('startDate', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>)).toList();
+    });
   }
 }
 

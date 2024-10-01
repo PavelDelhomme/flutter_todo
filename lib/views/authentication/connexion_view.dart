@@ -3,6 +3,8 @@ import 'dart:developer';
 import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:todo_firebase/services/auth_service.dart';
 import '../home/home_view.dart';
 import 'inscription_view.dart';
 
@@ -21,42 +23,47 @@ class ConnexionViewState extends State<ConnexionView> {
   final _auth = FirebaseAuth.instance;
   bool _isLoading = false;
 
+  final AuthService _authService = AuthService();
+
   Future<void> _signIn() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() {
         _isLoading = true;
       });
-      try {
-        await _auth.signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-        log("connexion_view : _auth.signInWithEmailAndPassword passed");
 
+      try {
+        User? user = await _authService.signIn(
+          _emailController.text,
+          _emailController.text,
+        );
         // Redirection vers HomeView après connexion réussie
-        if (mounted) {
+        if (user != null && mounted) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const HomeView()),
           );
         }
-      } on FirebaseAuthException {
-        log("connexion_view : Echec de la connexion identifiant non valide");
-        if (mounted) {
+      } on FirebaseAuthException catch (e) {
+        log("FirebaseAuthException caught with code: ${e.code} and message: ${e.message}");
+
+        if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
           Flushbar(
-            message: "Identifiants incorrects. Veuillez réessayer.",
+            message: "Identifiant ou mot de passe incorrect. Veuillez réessayer.",
+            duration: const Duration(seconds: 3),
+            flushbarPosition: FlushbarPosition.TOP,
+          ).show(context);
+        } else {
+          // Gestion générique des erreurs
+          Flushbar(
+            message: "Erreur lors de la connexion : ${e.message}",
             duration: const Duration(seconds: 3),
             flushbarPosition: FlushbarPosition.TOP,
           ).show(context);
         }
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Echec de la connexion : $e')),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Echec de la connexion"))
+        );
         log("connexion_view : Erreur de la connexion $e");
-        log("connexion_view : email passé : $_emailController");
-        log("connexion_view : password passé : $_passwordController");
       } finally {
         if (mounted) {
           setState(() {
@@ -67,6 +74,10 @@ class ConnexionViewState extends State<ConnexionView> {
     }
   }
 
+  Future<void> _saveUserCredentials(User user) async {
+    await const FlutterSecureStorage().write(key: 'userEmail', value: user.email);
+    await const FlutterSecureStorage().write(key: 'userPassword', value: _passwordController.text.trim());
+  }
 
   @override
   Widget build(BuildContext context) {

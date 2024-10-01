@@ -27,8 +27,17 @@ class SettingsViewState extends State<SettingsView> {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       _userEmail = user.email ?? '';
-      final doc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
-      if (doc.exists) {
+
+      DocumentSnapshot doc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
+
+      // Si les settings n'existent pas encore, les créer
+      if (!doc.exists) {
+        await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).set({
+          'reminderEnabled': true,
+          'reminderTime': 10,
+        });
+        log("Création du document userSettings pour l'utilisateur ${user.uid}");
+      } else {
         setState(() {
           _reminderEnabled = doc['reminderEnabled'] ?? false;
           _reminderTime = doc['reminderTime'] ?? 10;

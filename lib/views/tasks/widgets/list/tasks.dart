@@ -38,10 +38,15 @@ class TasksList extends StatelessWidget {
           }
 
           var docs = snapshot.data!.docs;
-          if (docs.isEmpty) {
-            return const Center(child: Text(CustomStr.noTaskYet));
+          if (docs.isEmpty || docs.any((doc) {
+            final data = doc.data();
+            if (data is Map<String, dynamic>) {
+              return data['title'] == '__dummy_task__';
+            }
+            return false;
+          })) {
+            return const Center(child: const Text(CustomStr.noTaskYet));
           }
-
           return ListView.builder(
             itemCount: docs.length,
             itemBuilder: (context, index) {

@@ -33,21 +33,26 @@ class EditTaskScreenState extends State<EditTaskScreen> {
   @override
   void initState() {
     super.initState();
+    log("initState called");
     _startDateController = TextEditingController();
     _endDateController = TextEditingController();
     if (widget.taskId.isNotEmpty) {
+      log("Task ID is not empty, loading initial data");
       loadInitialData();
     } else {
+      log("Creating a new task, setting default start and end dates");
       startDate = DateTime.now();
       endDate = startDate!.add(const Duration(hours: 1));
       _startDateController.text = DateFormat('yyyy-MM-dd HH:mm').format(startDate!);
       _endDateController.text = DateFormat('yyyy-MM-dd HH:mm').format(endDate!);
-      _isLoading = false;
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   Future<void> loadInitialData() async {
-    log("edit_task : loadInitialData : taskId received in widget : ${widget.taskId}");
+    log("Loading initial data for task : ${widget.taskId}");
     try {
       DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection("tasks").doc(widget.taskId).get();
       log("edit_task : loadInitialData : snapshot correctly retrieved");
@@ -55,7 +60,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
       log("edit_task : loadInitialData : data from snapshot : $data");
 
       if (data != null) {
-        log("edit_task : loadInitialdata : data not null retrieve older data known");
+        log("Populating fields with existing task data");
         setState(() {
           titleField = data['title'] ?? '';
           subtitleField = data['subtitle'] ?? '';
@@ -67,9 +72,14 @@ class EditTaskScreenState extends State<EditTaskScreen> {
           _endDateController.text = DateFormat('yyyy-MM-dd HH:mm').format(endDate!);
           _isLoading = false;
         });
+      } else {
+        log("No data found for task: ${widget.taskId}");
+        setState(() {
+          _isLoading = false;
+        });
       }
     } catch (e) {
-      log("Erreur lors du chargement des données : $e");
+      log("Error loading initial data: $e");
       setState(() {
         _isLoading = false;
       });
@@ -141,6 +151,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
 
   @override
   Widget build(BuildContext context) {
+    log("Building widget tree");
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.taskId.isEmpty ? "Créer une tâche" : "Modifier une tâche"),
@@ -155,13 +166,24 @@ class EditTaskScreenState extends State<EditTaskScreen> {
             TextFormField(
               initialValue: titleField,
               decoration: const InputDecoration(labelText: "Titre de la tâche"),
-              onSaved: (value) => titleField = value!,
-              validator: (value) => value!.isEmpty ? 'Ce champ ne peut être vide' : null,
+              onSaved: (value) {
+                log("Title field saved with value: $value");
+                titleField = value!;
+              },
+              validator: (value) {
+                if (value!.isEmpty) {
+                  return 'Ce champ ne peut être vide';
+                }
+                return null;
+              },
             ),
             TextFormField(
               initialValue: subtitleField,
               decoration: const InputDecoration(labelText: "Sous-titre de la tâche"),
-              onSaved: (value) => subtitleField = value!,
+              onSaved: (value) {
+                log("Subtitle field saved with value: $value");
+                subtitleField = value!;
+              },
             ),
             TextFormField(
               controller: _startDateController,
@@ -194,12 +216,18 @@ class EditTaskScreenState extends State<EditTaskScreen> {
                 );
               }).toList(),
               decoration: const InputDecoration(labelText: 'Priorité'),
-              onChanged: (value) => setState(() => priorityLevelField = value ?? ''),
+              onChanged: (value) {
+                log("Priority level changed to: $value");
+                setState(() => priorityLevelField = value ?? '');
+              },
             ),
             TextFormField(
               initialValue: notesField,
               decoration: const InputDecoration(labelText: 'Notes'),
-              onSaved: (value) => notesField = value!,
+              onSaved: (value) {
+                log("Notes field saved with value: $value");
+                notesField = value!;
+              },
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -213,13 +241,28 @@ class EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   Future<void> _saveOrUpdateTask() async {
-    if (!_formKey.currentState!.validate()) return;
+    log("Save or update task triggered");
+    if (!_formKey.currentState!.validate()) {
+      log("Form validation failed");
+      return;
+    }
 
     _formKey.currentState!.save();
-    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (userId == null) {
+      log("User is not authenticated");
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Erreur : l'utilisateur n'est pas authentifié."))
+      );
+      return;
+    }
+
+    log("User authenticated with UID: $userId");
 
     final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
-    String taskId = widget.taskId.isEmpty ? taskCollection.doc().id : widget.taskId; // Création d'un nouvel id si la tâche n'existe pas et n'est pas trouvé dans la collection
+    String taskId = widget.taskId.isEmpty ? taskCollection.doc().id : widget.taskId;
+    log("Task ID is: $taskId");
 
     Map<String, dynamic> taskData = {
       'id': taskId,
@@ -235,27 +278,30 @@ class EditTaskScreenState extends State<EditTaskScreen> {
 
     try {
       final task = Task.fromMap(taskData);
+      log("Task object created from data: $taskData");
 
       if (widget.taskId.isEmpty) {
-        // Create task
+        log("Creating new task");
         await taskService.addTask(task);
+        log("Task created successfully");
       } else {
-        // Update task
+        log("Updating existing task with ID: $taskId");
         await taskService.updateTask(task);
+        log("Task updated successfully");
       }
 
-      // Récupérer les nouveaux paramètres utilisateur
       DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(userId).get();
       Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
-      // Mise à jour des notifications après modification de la tâche
+      log("User settings retrieved: $userSettings");
+
       await notificationService.updateNotifications(userSettings);
+      log("Notifications updated based on user settings");
 
       Navigator.pop(context, task);
     } catch (e) {
-      log("edit_task.dart : Erreur lors de l'ajout ou de la mise à jour de la tâche : $e");
+      log("Error during task save/update: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text("Erreur lors de l'enregistrement de la tâche $e")),
+        SnackBar(content: Text("Erreur lors de l'enregistrement de la tâche $e")),
       );
     }
   }

@@ -1,8 +1,7 @@
-
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../models/user.dart';
+import 'package:todo_firebase/services/auth_service.dart';
 import '../home/home_view.dart';
 
 class InscriptionView extends StatefulWidget {
@@ -16,51 +15,55 @@ class InscriptionViewState extends State<InscriptionView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final _db = FirebaseFirestore.instance;
-  final _auth = FirebaseAuth.instance;
   bool _isLoading = false;
 
+  final AuthService _authService = AuthService();
 
   Future<void> _signUp() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() {
         _isLoading = true;
       });
+
       try {
-        UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
+        User? user = await _authService.signUp(
+            _emailController.text,
+            _passwordController.text,
         );
+        
+        if (user != null && mounted) {
+          // Attendre la création des documents utilisateur avant de passer à l'écran suivant
+          await Future.delayed(const Duration(seconds: 2)); // Délai pour garantir la création des documents
 
-        UserModel newUser = UserModel(
-          id: userCredential.user!.uid,
-          email: _emailController.text.trim(),
-          name: '', // Collect user's name if needed
-        );
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomeView()),
+          );
+        } else {
+          log("Erreur : utilisateur non créé correctement.");
+          _showErrorSnackbar("Erreur lors de la création du compte. Veuillez réessayer.");
+        }
 
-        await _db.collection('users').doc(newUser.id).set(newUser.toMap());
-
-        await _db.collection('userSettings').doc(userCredential.user!.uid).set({
-          'reminderEnabled': false,
-          'reminderTime': 10,
-        });
-
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeView()),
-        );
-      } on FirebaseAuthException catch (e) {
+      /*} on FirebaseAuthException catch (e) {
         String errorMessage;
         if (e.code == 'email-already-in-use') {
           errorMessage = 'Cette adresse email est déjà utilisée.';
+          log("Erreur de l'inscription : $errorMessage");
         } else {
           errorMessage = 'Échec de l\'inscription : ${e.message}';
+          log("Erreur de l'inscription : $errorMessage");
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage)),
-        );
+        );*/
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Échec de l\'inscription : $e')),
+        log("Erreur lors de l'inscription : $e");
+        _showErrorSnackbar("Erreur lors de l'inscription : $e");
+
+        // Ignorer l'erreur quand même
+        log("Erreur ignorée lors de l'inscription : $e");
+        // Redirection malgré l'erreur
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeView()),
         );
       } finally {
         setState(() {
@@ -70,6 +73,9 @@ class InscriptionViewState extends State<InscriptionView> {
     }
   }
 
+  void _showErrorSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
 
   @override
   Widget build(BuildContext context) {
