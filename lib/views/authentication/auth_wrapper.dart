@@ -21,7 +21,30 @@ class _AuthWrapperState extends State<AuthWrapper> {
   @override
   void initState() {
     super.initState();
-    _checkUserStatus();
+    _restoreUserSession(); // Restaurer la session utilisateur si possible
+    _checkUserStatus(); // Vérification de l'état de l'utilisateur
+  }
+
+  Future<void> _restoreUserSession() async {
+    try {
+      final email = await _secureStorage.read(key: "userEmail");
+      final password = await _secureStorage.read(key: "userPassword");
+
+      log("auth_wrapper.dart : _restoreUserSession : email récupérer depuis _secureStorage : $email");
+      log("auth_wrapper.dart : _restoreUserSession : password récupérer depuis _secureStorage : $password");
+
+      if (email != null && password != null) {
+        log(
+            "auth_wrapper.dart : _restoreUserSession : email & le password ne sont pas nul");
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: email, password: password);
+        log("Session restaurée avec succès");
+      } else {
+        log("auth_wrapper.dart : _restoreUserSession : Aucun identifiant trouvé dans FlutterSecureStorage.");
+      }
+    } catch (e) {
+      log("Erreur lors de la restauration de la session : $e");
+    }
   }
 
   Future<void> _checkUserStatus() async {

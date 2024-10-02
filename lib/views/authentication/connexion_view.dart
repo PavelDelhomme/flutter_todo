@@ -20,7 +20,6 @@ class ConnexionViewState extends State<ConnexionView> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final _auth = FirebaseAuth.instance;
   bool _isLoading = false;
 
   final AuthService _authService = AuthService();
@@ -46,24 +45,26 @@ class ConnexionViewState extends State<ConnexionView> {
         log("FirebaseAuthException caught with code: ${e.code} and message: ${e.message}");
 
         if (e.code == 'user-not-found' || e.code == 'wrong-password' || e.code == 'invalid-credential') {
-          Flushbar(
-            message: "Identifiant ou mot de passe incorrect. Veuillez réessayer.",
-            duration: const Duration(seconds: 3),
-            flushbarPosition: FlushbarPosition.TOP,
-          ).show(context);
+          _showErrorFlushbar("Identifiant ou mot de passe incorrect. Veuillez réessayez.");
         } else {
           // Gestion générique des erreurs
-          Flushbar(
-            message: "Erreur lors de la connexion : ${e.message}",
-            duration: const Duration(seconds: 3),
-            flushbarPosition: FlushbarPosition.TOP,
-          ).show(context);
+          _showErrorFlushbar("Erreur lors de la connexion");
         }
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Echec de la connexion"))
-        );
-        log("connexion_view : Erreur de la connexion $e");
+        // Vérification si l'erreur est 'PigeonUserDetails et l'ignorer alors
+        if (e.toString().contains('PigeonUserDetails')) {
+          log("Erreur liée à PiegonUserDetails ignorée : $e");
+
+          // Permettre la continuation de la connexion même avec l'erreur ignorée
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomeView()),
+          );
+        } else {
+          log("Erreur inattendue lors de la connexion : $e");
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Echec de la connexion")),
+          );
+        }
       } finally {
         if (mounted) {
           setState(() {
@@ -74,9 +75,12 @@ class ConnexionViewState extends State<ConnexionView> {
     }
   }
 
-  Future<void> _saveUserCredentials(User user) async {
-    await const FlutterSecureStorage().write(key: 'userEmail', value: user.email);
-    await const FlutterSecureStorage().write(key: 'userPassword', value: _passwordController.text.trim());
+  void _showErrorFlushbar(String message) {
+    Flushbar(
+      message: message,
+      duration: const Duration(seconds: 3),
+      flushbarPosition: FlushbarPosition.TOP,
+    ).show(context);
   }
 
   @override

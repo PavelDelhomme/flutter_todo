@@ -24,6 +24,9 @@ dependencies:
   cloud_firestore: ^4.10.0
   firebase_auth: ^4.6.0
 
+  # Provider to save user
+  provider: ^6.1.2
+
   permission_handler: ^10.2.0
   rxdart: ^0.28.0
   flutter_speed_dial: ^7.0.0
@@ -42,3 +45,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icons/bell_notification.webp
+
+flutter_secure_storage:
+  androidOptions:
+    encryptedSharedPreferences: true

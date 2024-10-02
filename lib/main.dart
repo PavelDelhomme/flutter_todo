@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:todo_firebase/models/task.dart';
 import 'package:todo_firebase/views/authentication/connexion_view.dart';
@@ -17,11 +18,18 @@ void main() async {
   tz.initializeTimeZones();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  FirebaseFirestore.instance.clearPersistence();
+  // Suppression de la persistance si nécessaire
+  //FirebaseFirestore.instance.clearPersistence();
 
   await Hive.initFlutter();
   Hive.registerAdapter(TaskAdapter());
   await Hive.openBox<Task>('tasks');
+
+  /*
+  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
+
+  await secureStorage.deleteAll();
+   */
 
 
   try {
