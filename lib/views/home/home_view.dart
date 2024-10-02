@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:todo_firebase/views/home/components/drawer_menu.dart';
+import 'package:todo_firebase/views/_components/drawer_menu.dart';
 import 'package:todo_firebase/views/tasks/widgets/form/edit_task.dart';
 import 'package:todo_firebase/views/tasks/widgets/list/tasks.dart';
 

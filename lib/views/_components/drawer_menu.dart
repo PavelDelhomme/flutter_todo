@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../../authentication/connexion_view.dart';
-import '../../settings/settings_view.dart';
-import '../../tasks/widgets/list/tasks.dart';
+import '../authentication/connexion_view.dart';
+import '../settings/settings_view.dart';
+import '../tasks/widgets/list/tasks.dart';
 
 class DrawerMenu extends StatelessWidget {
   const DrawerMenu({super.key, required this.onSignOut});

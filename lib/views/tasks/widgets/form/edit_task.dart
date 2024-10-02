@@ -271,6 +271,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
     final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
     String taskId = widget.taskId.isEmpty ? taskCollection.doc().id : widget.taskId;
     log("Task ID is: $taskId");
+    log("userId : $userId");
 
     Map<String, dynamic> taskData = {
       'id': taskId,

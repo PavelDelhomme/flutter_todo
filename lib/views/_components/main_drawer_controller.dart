@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../../settings/settings_view.dart';
-import '../../tasks/widgets/list/tasks.dart';
+import '../settings/settings_view.dart';
+import '../tasks/widgets/list/tasks.dart';
 
 class MainDrawerController extends StatefulWidget {
   const MainDrawerController({super.key});
