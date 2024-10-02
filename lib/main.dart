@@ -1,10 +1,8 @@
 import 'dart:developer';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_firebase/models/task.dart';
@@ -28,13 +26,6 @@ void main() async {
   Hive.registerAdapter(TaskAdapter());
   await Hive.openBox<Task>('tasks');
 
-  /*
-  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
-
-  await secureStorage.deleteAll();
-   */
-
-
   try {
     await notificationService.initialize();
   } catch (e) {
@@ -51,7 +42,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<AuthenticationProvider>(
+        ChangeNotifierProvider<AuthenticationProvider>(
           create: (_) => AuthenticationProvider(FirebaseAuth.instance),
         ),
         StreamProvider<User?>(
@@ -72,17 +63,5 @@ class MainApp extends StatelessWidget {
         },
       ),
     );
-    /*return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Todo App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const AuthWrapper(),
-      routes: {
-        '/sign-in': (context) => const ConnexionView(),
-        '/home': (context) => const HomeView(),
-      },
-    );*/
   }
 }
