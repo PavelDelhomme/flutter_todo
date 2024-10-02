@@ -1,12 +1,11 @@
 import 'dart:developer';
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:todo_firebase/services/notification_service.dart';
-
-import '../../../../models/task.dart';
-import '../../../../services/task_service.dart';
+import 'package:todo_firebase/services/service_locator.dart';
+import 'package:todo_firebase/models/task.dart';
+import 'package:todo_firebase/services/task_service.dart';
 
 class EditTaskScreen extends StatefulWidget {
   final String taskId;
@@ -33,14 +32,11 @@ class EditTaskScreenState extends State<EditTaskScreen> {
   @override
   void initState() {
     super.initState();
-    log("initState called");
     _startDateController = TextEditingController();
     _endDateController = TextEditingController();
     if (widget.taskId.isNotEmpty) {
-      log("Task ID is not empty, loading initial data");
       loadInitialData();
     } else {
-      log("Creating a new task, setting default start and end dates");
       startDate = DateTime.now();
       endDate = startDate!.add(const Duration(hours: 1));
       _startDateController.text = DateFormat('yyyy-MM-dd HH:mm').format(startDate!);
@@ -52,28 +48,21 @@ class EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   Future<void> loadInitialData() async {
-    log("Loading initial data for task: ${widget.taskId}");
     try {
-      DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection("tasks").doc(widget.taskId).get();
-      log("Snapshot retrieved for task: ${widget.taskId}");
-      var data = snapshot.data() as Map<String, dynamic>?;
-      log("Data from snapshot: $data");
-
-      if (data != null) {
-        log("Populating fields with existing task data");
+      var task = await serviceLocator<TaskService>().getTaskById(widget.taskId);
+      if (task != null) {
         setState(() {
-          titleField = data['title'] ?? '';
-          subtitleField = data['subtitle'] ?? '';
-          notesField = data['notes'] ?? '';
-          priorityLevelField = data['priority'] ?? 'Neutre';
-          startDate = (data['startDate'] as Timestamp).toDate();
-          endDate = (data['endDate'] as Timestamp).toDate();
+          titleField = task.title;
+          subtitleField = task.subtitle;
+          notesField = task.notes;
+          priorityLevelField = task.priorityLevel;
+          startDate = task.startDate;
+          endDate = task.endDate;
           _startDateController.text = DateFormat('yyyy-MM-dd HH:mm').format(startDate!);
           _endDateController.text = DateFormat('yyyy-MM-dd HH:mm').format(endDate!);
           _isLoading = false;
         });
       } else {
-        log("No data found for task: ${widget.taskId}");
         setState(() {
           _isLoading = false;
         });
@@ -249,66 +238,38 @@ class EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   Future<void> _saveOrUpdateTask() async {
-    log("Save or update task triggered");
-    if (!_formKey.currentState!.validate()) {
-      log("Form validation failed");
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     _formKey.currentState!.save();
-    final userId = FirebaseAuth.instance.currentUser?.uid;
+    final userId = serviceLocator<FirebaseAuth>().currentUser?.uid;
 
     if (userId == null) {
-      log("User is not authenticated");
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Erreur : l'utilisateur n'est pas authentifié."))
-      );
+          const SnackBar(content: Text("Erreur : l'utilisateur n'est pas authentifié.")));
       return;
     }
 
-    log("User authenticated with UID: $userId");
-
-    final CollectionReference taskCollection = FirebaseFirestore.instance.collection('tasks');
-    String taskId = widget.taskId.isEmpty ? taskCollection.doc().id : widget.taskId;
-    log("Task ID is: $taskId");
-    log("userId : $userId");
-
-    Map<String, dynamic> taskData = {
-      'id': taskId,
-      'title': titleField.isNotEmpty ? titleField : 'Tâche sans titre',
-      'subtitle': subtitleField,
-      'notes': notesField ?? '',
-      'priorityLevel': priorityLevelField.isNotEmpty ? priorityLevelField : 'Neutre',
-      'startDate': Timestamp.fromDate(startDate ?? DateTime.now()),
-      'endDate': Timestamp.fromDate(endDate ?? DateTime.now().add(const Duration(hours: 1))),
-      'userId': userId,
-      'isCompleted': false,
-    };
+    Task task = Task(
+      id: widget.taskId.isEmpty ? serviceLocator<FirebaseFirestore>().collection('tasks').doc().id : widget.taskId,
+      userId: userId,
+      title: titleField,
+      subtitle: subtitleField,
+      notes: notesField ?? '',
+      priorityLevel: priorityLevelField,
+      startDate: startDate!,
+      endDate: endDate!,
+      isCompleted: false,
+    );
 
     try {
-      final task = Task.fromMap(taskData);
-      log("Task object created from data: $taskData");
-
       if (widget.taskId.isEmpty) {
-        log("Creating new task");
-        await taskService.addTask(task);
-        log("Task created successfully");
+        await serviceLocator<TaskService>().addTask(task);
       } else {
-        log("Updating existing task with ID: $taskId");
-        await taskService.updateTask(task);
-        log("Task updated successfully");
+        await serviceLocator<TaskService>().updateTask(task);
       }
-
-      DocumentSnapshot userSettingsDoc = await FirebaseFirestore.instance.collection('userSettings').doc(userId).get();
-      Map<String, dynamic> userSettings = userSettingsDoc.data() as Map<String, dynamic>;
-      log("User settings retrieved: $userSettings");
-
-      await notificationService.updateNotifications(userSettings);
-      log("Notifications updated based on user settings");
 
       Navigator.pop(context, task);
     } catch (e) {
-      log("Error during task save/update: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Erreur lors de l'enregistrement de la tâche $e")),
       );

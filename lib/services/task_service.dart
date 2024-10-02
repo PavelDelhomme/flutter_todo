@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:todo_firebase/services/service_locator.dart';
 import '../models/task.dart';
 import '../services/notification_service.dart';
 
@@ -9,9 +10,8 @@ class TaskService {
 
   Future<void> addTask(Task task) async {
     // Récupérer l'utilisateur actuel
-    final User? user = FirebaseAuth.instance.currentUser;
-
-
+    //final User? user = FirebaseAuth.instance.currentUser;
+    final User? user = serviceLocator<FirebaseAuth>().currentUser;
 
     if (user == null) {
       log("task_service : Erreur: l'utilisateur n'est pas authentifié.");
@@ -22,36 +22,41 @@ class TaskService {
     }
     // Assigner l'UID de l'utilisateur à la tâche
     task.userId = user.uid;
-
     // Enregistrement de la tâche dans Firestore
     await taskCollection.doc(task.id).set(task.toMap());
-
     // Mise a jour des notifications pour la nouvelle tâche
-    await notificationService.updateNotificationsForUser(user.uid);
+    //await notificationService.updateNotificationsForUser(user.uid);
+    await serviceLocator<NotificationService>().updateNotificationsForUser(user.uid);
     log("Tâche ajoutée et notifications mise à jour.");
   }
 
   Future<void> updateTask(Task task) async {
-    final User? user = FirebaseAuth.instance.currentUser;
+    //final User? user = FirebaseAuth.instance.currentUser;
+    final User? user = serviceLocator<FirebaseAuth>().currentUser;
     await taskCollection.doc(task.id).update(task.toMap());
-
     // Mise à jours des notifications
-    await notificationService.updateNotificationsForUser(user!.uid);
+    //await notificationService.updateNotificationsForUser(user!.uid);
+    if (user != null) {
+      await serviceLocator<NotificationService>().updateNotificationsForUser(user.uid);
+    }
     log("Task updated and notifications rescheduled.");
   }
 
   Future<void> deleteTask(String id) async {
-    await notificationService.cancelNotification(id.hashCode); // Cancel start notification
-    await notificationService.cancelNotification(id.hashCode + 1); // Cancel reminder notification
+    //await notificationService.cancelNotification(id.hashCode); // Cancel start notification
+    //await notificationService.cancelNotification(id.hashCode + 1); // Cancel reminder notification
+    await serviceLocator<NotificationService>().cancelNotification(id.hashCode);
+    await serviceLocator<NotificationService>().cancelNotification(id.hashCode + 1);
     await taskCollection.doc(id).delete();
     log("Task deleted and notifications canceled");
   }
 
-
   Future<void> markAsCompleted(String id) async {
     await taskCollection.doc(id).update({"isCompleted": true});
-    await notificationService.cancelNotification(id.hashCode);
-    await notificationService.cancelNotification(id.hashCode + 1);
+    await serviceLocator<NotificationService>().cancelNotification(id.hashCode);
+    await serviceLocator<NotificationService>().cancelNotification(id.hashCode + 1);
+    //await notificationService.cancelNotification(id.hashCode);
+    //await notificationService.cancelNotification(id.hashCode + 1);
     log("Task marked as completed and notifications canceled");
   }
 
@@ -70,6 +75,15 @@ class TaskService {
         .map((snapshot) {
           return snapshot.docs.map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>)).toList();
     });
+  }
+
+  // Nouvelle méthode pour récupérer une tâche par ID
+  Future<Task?> getTaskById(String taskId) async {
+    final doc = await taskCollection.doc(taskId).get();
+    if (doc.exists) {
+      return Task.fromMap(doc.data() as Map<String, dynamic>);
+    }
+    return null;
   }
 }
 

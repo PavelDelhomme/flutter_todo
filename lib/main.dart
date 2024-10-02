@@ -1,17 +1,15 @@
-import 'dart:developer';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_firebase/models/task.dart';
+import 'package:todo_firebase/services/service_locator.dart';
 import 'package:todo_firebase/utils/authentication_provider.dart';
 import 'package:todo_firebase/views/authentication/connexion_view.dart';
 import 'package:todo_firebase/views/home/home_view.dart';
 import 'firebase_options.dart';
 import 'views/authentication/auth_wrapper.dart';
-import 'services/notification_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
 void main() async {
@@ -26,11 +24,8 @@ void main() async {
   Hive.registerAdapter(TaskAdapter());
   await Hive.openBox<Task>('tasks');
 
-  try {
-    await notificationService.initialize();
-  } catch (e) {
-    log('Error initializing notification service: $e');
-  }
+  // Initialiser les services
+  setupServiceLocator();
 
   runApp(const MainApp());
 }

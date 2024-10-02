@@ -2,13 +2,20 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:todo_firebase/services/service_locator.dart';
 import '../models/user.dart';
 
 
 class AuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  // Anciens fonctionnement des services
+  //final FirebaseAuth _auth = FirebaseAuth.instance;
+  //final FirebaseFirestore _db = FirebaseFirestore.instance;
+  //final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+
+  // Service centralisés
+  final FirebaseAuth _auth = serviceLocator<FirebaseAuth>();
+  final FirebaseFirestore _db = serviceLocator<FirebaseFirestore>();
+  final FlutterSecureStorage _secureStorage = serviceLocator<FlutterSecureStorage>();
 
   // Connexion user
   Future<User?> signIn(String email, String password) async {
