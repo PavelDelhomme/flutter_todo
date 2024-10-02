@@ -47,6 +47,8 @@ void main() async {
   // Initialiser les services
   setupServiceLocator();
 
+  //await deleteAllTasks();
+
   runApp(const MainApp());
 }
 

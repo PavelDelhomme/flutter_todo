@@ -2,6 +2,8 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:todo_firebase/services/service_locator.dart';
+import 'package:todo_firebase/services/task_service.dart';
 import '../../utils/authentication_provider.dart';
 import '../home/home_view.dart';
 
@@ -34,6 +36,11 @@ class InscriptionViewState extends State<InscriptionView> {
         // Attendre quelques secondes pour garantir la création des documents Firestore
         await Future.delayed(const Duration(seconds: 2));
 
+        // Création d'une tâche ficitve pour le nouvel utilisateur
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          await serviceLocator<TaskService>().createDummyTaskForNewUser(user.uid);
+        }
         // Navigation vers l'écran HomeView après l'inscription réussie
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),
