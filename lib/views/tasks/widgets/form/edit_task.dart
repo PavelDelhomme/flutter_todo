@@ -52,12 +52,12 @@ class EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   Future<void> loadInitialData() async {
-    log("Loading initial data for task : ${widget.taskId}");
+    log("Loading initial data for task: ${widget.taskId}");
     try {
       DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection("tasks").doc(widget.taskId).get();
-      log("edit_task : loadInitialData : snapshot correctly retrieved");
+      log("Snapshot retrieved for task: ${widget.taskId}");
       var data = snapshot.data() as Map<String, dynamic>?;
-      log("edit_task : loadInitialData : data from snapshot : $data");
+      log("Data from snapshot: $data");
 
       if (data != null) {
         log("Populating fields with existing task data");
@@ -90,6 +90,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   Future<void> _selectStartDate(BuildContext context) async {
+    log("Selecting start date");
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: startDate ?? DateTime.now(),
@@ -98,6 +99,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
     );
 
     if (pickedDate != null) {
+      log("Start date selected: $pickedDate");
       final pickedTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(startDate ?? DateTime.now()),
@@ -113,15 +115,19 @@ class EditTaskScreenState extends State<EditTaskScreen> {
             pickedTime.minute,
           );
           _startDateController.text = DateFormat('yyyy-MM-dd HH:mm').format(startDate!);
+          log("Start date and time set to: $startDate");
 
-          // Mettre à jour automatiquement la date de fin
+          // Automatically update end date
           endDate = startDate!.add(const Duration(hours: 1));
           _endDateController.text = DateFormat('yyyy-MM-dd HH:mm').format(endDate!);
+          log("End date and time automatically set to: $endDate");
         });
       }
     }
   }
+
   Future<void> _selectEndDate(BuildContext context) async {
+    log("Selecting end date");
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: endDate ?? DateTime.now().add(const Duration(hours: 1)),
@@ -129,6 +135,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
       lastDate: DateTime(2100),
     );
     if (pickedDate != null) {
+      log("End date selected: $pickedDate");
       final pickedTime = await showTimePicker(
         context: context,
         initialTime: TimeOfDay.fromDateTime(endDate ?? DateTime.now().add(const Duration(hours: 1))),
@@ -144,6 +151,7 @@ class EditTaskScreenState extends State<EditTaskScreen> {
             pickedTime.minute,
           );
           _endDateController.text = DateFormat('yyyy-MM-dd HH:mm').format(endDate!);
+          log("End date and time set to: $endDate");
         });
       }
     }

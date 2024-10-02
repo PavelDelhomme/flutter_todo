@@ -34,7 +34,7 @@ class ConnexionViewState extends State<ConnexionView> {
       try {
         User? user = await _authService.signIn(
           _emailController.text,
-          _emailController.text,
+          _passwordController.text,
         );
         // Redirection vers HomeView après connexion réussie
         if (user != null && mounted) {
