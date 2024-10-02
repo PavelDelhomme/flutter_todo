@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:todo_firebase/services/service_locator.dart';
 import 'package:todo_firebase/views/_components/drawer_menu.dart';
 import 'package:todo_firebase/views/tasks/widgets/form/edit_task.dart';
 import 'package:todo_firebase/views/tasks/widgets/list/tasks.dart';
@@ -71,11 +72,11 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Future<void> _initializeUserData() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = serviceLocator<FirebaseAuth>().currentUser;
     if (user != null) {
-      final userDoc = await FirebaseFirestore.instance.collection("userSettings").doc(user.uid).get();
+      final userDoc = await serviceLocator<FirebaseFirestore>().collection("userSettings").doc(user.uid).get();
       if (!userDoc.exists) {
-        await FirebaseFirestore.instance.collection("userSettings").doc(user.uid).set({
+        await serviceLocator<FirebaseFirestore>().collection("userSettings").doc(user.uid).set({
           'reminderEnabled': false,
           'reminderTime': 10,
         });

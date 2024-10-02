@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -11,6 +12,25 @@ import 'package:todo_firebase/views/home/home_view.dart';
 import 'firebase_options.dart';
 import 'views/authentication/auth_wrapper.dart';
 import 'package:timezone/data/latest.dart' as tz;
+
+
+Future<void> deleteAllTasks() async {
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  try {
+    // Récupérer tous les documents de la collection "tasks"
+    QuerySnapshot querySnapshot = await firestore.collection('tasks').get();
+
+    // Supprimer chaque document
+    for (QueryDocumentSnapshot doc in querySnapshot.docs) {
+      await doc.reference.delete();
+    }
+
+    print("Toutes les tâches ont été supprimées.");
+  } catch (e) {
+    print("Erreur lors de la suppression des tâches : $e");
+  }
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

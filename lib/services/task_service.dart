@@ -61,7 +61,7 @@ class TaskService {
   }
 
   Stream<List<Task>> getTasks() {
-    final User? user = FirebaseAuth.instance.currentUser;
+    final User? user = serviceLocator<FirebaseAuth>().currentUser;
 
     if (user == null) {
       log("Erreur : L'utilisateur n'est pas authentifié.");
@@ -73,7 +73,13 @@ class TaskService {
         .orderBy('startDate', descending: true)
         .snapshots()
         .map((snapshot) {
-          return snapshot.docs.map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>)).toList();
+          List<Task> tasks = snapshot.docs.map((doc) => Task.fromMap(doc.data() as Map<String, dynamic>)).toList();
+
+          if (tasks.isEmpty) {
+            _addDummyTaskForUser(user.uid);
+          }
+
+          return tasks.where((task) => task.title != '__dummy_task__').toList();
     });
   }
 
@@ -84,6 +90,33 @@ class TaskService {
       return Task.fromMap(doc.data() as Map<String, dynamic>);
     }
     return null;
+  }
+
+  Future<void> _addDummyTaskForUser(String userId) async {
+    final querySnapshot = await taskCollection
+        .where('userId', isEqualTo: userId)
+        .where('title', isEqualTo: '__dummy_task__')
+        .get();
+
+    // Ne créer qu'une seule tâche fictive si elle n'existe pas déjà
+    if (querySnapshot.docs.isEmpty) {
+      final dummyTask = Task(
+        id: taskCollection.doc().id,
+        userId: userId,
+        title: '__dummy_task__',
+        subtitle: '',
+        notes: '',
+        priorityLevel: 'Neutre',
+        startDate: DateTime.now(),
+        endDate: DateTime.now().add(const Duration(hours: 1)),
+        isCompleted: false,
+      );
+
+      await taskCollection.doc(dummyTask.id).set(dummyTask.toMap());
+      log("Tâche fictive ajoutée pour l'utilisateur $userId");
+    } else {
+      log("Tâche fictive déjà existante pour l'utilisateur $userId, aucune tâche fictive ajoutée.");
+    }
   }
 }
 

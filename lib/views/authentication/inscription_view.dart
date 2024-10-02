@@ -25,10 +25,16 @@ class InscriptionViewState extends State<InscriptionView> {
       });
 
       try {
+        // Tentative de création du compte utilisateur
         await context.read<AuthenticationProvider>().signUp(
           email: _emailController.text,
           password: _passwordController.text,
         );
+
+        // Attendre quelques secondes pour garantir la création des documents Firestore
+        await Future.delayed(const Duration(seconds: 2));
+
+        // Navigation vers l'écran HomeView après l'inscription réussie
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeView()),
         );
@@ -37,7 +43,19 @@ class InscriptionViewState extends State<InscriptionView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Erreur: ${e.message}")),
         );
+      } catch (e) {
+        // Capture les erreurs inattendues et continue malgré cela
+        log("Erreur ignorée lors de l'inscription : $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Erreur inattendue, mais vous êtes connecté.")),
+        );
+
+        // Ignorer l'erreur et rediriger vers HomeView malgré l'erreur
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeView()),
+        );
       } finally {
+        // Réinitialisation de l'état de chargement
         setState(() {
           _isLoading = false;
         });

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:todo_firebase/services/notification_service.dart';
+import 'package:todo_firebase/services/service_locator.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({super.key});
@@ -23,16 +24,23 @@ class SettingsViewState extends State<SettingsView> {
     _loadSettings();
   }
 
+  //todo afficher un message en haut de l'écran a chaque fois que unne données est enregistrée automatiquement notamment les reminder et activation ou non des notifciation qu'il m'indique que ce qu'il vien d'être fait enfaite
+
   Future<void> _loadSettings() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = serviceLocator<FirebaseAuth>().currentUser;
     if (user != null) {
       _userEmail = user.email ?? '';
 
-      DocumentSnapshot doc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
+      //DocumentSnapshot doc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
+      DocumentSnapshot doc = await serviceLocator<FirebaseFirestore>().collection('userSettings').doc(user.uid).get();
 
       // Si les settings n'existent pas encore, les créer
       if (!doc.exists) {
-        await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).set({
+        /*await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).set({
+          'reminderEnabled': true,
+          'reminderTime': 10,
+        });*/
+        await serviceLocator<FirebaseFirestore>().collection('userSettings').doc(user.uid).set({
           'reminderEnabled': true,
           'reminderTime': 10,
         });
@@ -50,15 +58,22 @@ class SettingsViewState extends State<SettingsView> {
   }
 
   Future<void> _updateReminderSettings(bool reminderEnabled, int reminderTime) async {
-    final user = FirebaseAuth.instance.currentUser;
+    final user = serviceLocator<FirebaseAuth>().currentUser;
+    //final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
-        await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).set({
+        /*await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).set({
+          'reminderEnabled': reminderEnabled,
+          'reminderTime': reminderTime,
+        }, SetOptions(merge: true));
+         */
+        await serviceLocator<FirebaseFirestore>().collection('userSettings').doc(user.uid).set({
           'reminderEnabled': reminderEnabled,
           'reminderTime': reminderTime,
         }, SetOptions(merge: true));
 
-        await notificationService.updateNotificationsForUser(user.uid);
+        //await notificationService.updateNotificationsForUser(user.uid);
+        await serviceLocator<NotificationService>().updateNotificationsForUser(user.uid);
         log("Reminder settings updated : reminderEnabled : $reminderEnabled, reminderTime : $reminderTime");
       } catch (e) {
         log("Erreur lors de la mise à jour des paramètres de rappel : $e");

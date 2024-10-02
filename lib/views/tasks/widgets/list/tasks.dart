@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:intl/intl.dart';
 import 'package:todo_firebase/models/task.dart';
+import 'package:todo_firebase/services/service_locator.dart';
+import 'package:todo_firebase/services/task_service.dart';
 import 'package:todo_firebase/utils/custom_str.dart';
 import 'package:todo_firebase/views/tasks/widgets/list/task_widget.dart';
 
@@ -17,18 +19,14 @@ class TasksList extends StatelessWidget {
   }
 
   Future<void> _deleteTask(String id) async {
-    await FirebaseFirestore.instance.collection('tasks').doc(id).delete();
+    await serviceLocator<TaskService>().deleteTask(id);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('tasks')
-            .where('userId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
-            .orderBy('startDate', descending: true)
-            .snapshots(),
+      body: StreamBuilder<List<Task>>(
+        stream: serviceLocator<TaskService>().getTasks(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -37,35 +35,26 @@ class TasksList extends StatelessWidget {
             return const Center(child: Text(CustomStr.errorLoadingDatas));
           }
 
-          var docs = snapshot.data!.docs;
-          if (docs.isEmpty || docs.any((doc) {
-            final data = doc.data();
-            if (data is Map<String, dynamic>) {
-              return data['title'] == '__dummy_task__';
-            }
-            return false;
-          })) {
-            return const Center(child: const Text(CustomStr.noTaskYet));
-          }
-          return ListView.builder(
-            itemCount: docs.length,
-            itemBuilder: (context, index) {
-              var taskData = docs[index].data() as Map<String, dynamic>;
-              Task task = Task.fromMap(taskData);
+          var tasks = snapshot.data ?? [];
 
+          if (tasks.isEmpty) {
+            return const Center(child: Text(CustomStr.noTaskYet));
+          }
+
+          return ListView.builder(
+            itemCount: tasks.length,
+            itemBuilder: (context, index) {
+              Task task = tasks[index];
               return TaskWidget(
                 task: task,
                 onDismissed: () async {
-                  await _deleteTask(docs[index].id);
+                  await _deleteTask(task.id);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    //todo Unhandled Exception : Looking up a deactivated widget's ancestor is unsafe.
-                    //todo At this point the state of the
                     const SnackBar(content: Text(CustomStr.deletedTask)),
                   );
                 },
                 onMarkedComplete: () async {
-                  task.isCompleted = !task.isCompleted;
-                  await FirebaseFirestore.instance.collection('tasks').doc(docs[index].id).update({'isCompleted': task.isCompleted});
+                  await serviceLocator<TaskService>().markAsCompleted(task.id);
                 },
               );
             },
