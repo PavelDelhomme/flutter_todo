@@ -22,7 +22,7 @@ class AuthService {
       log("Connexion réussie pour l'utilisateur : ${userCredential.user?.uid}");
 
       try {
-        await _saveUserCredentials(userCredential.user!, password);
+        await saveUserCredentials(userCredential.user!, password);
         log("Identifiants sauvegarder avec succès dans FlutterSecureStorage.");
       } catch (e) {
         log("Erreur lors de la sauvegarde des identifiants : $e");
@@ -55,7 +55,7 @@ class AuthService {
       await _createUserData(userId, email);
 
       // Passer le mot de passe lors de l'enregistrement
-      await _saveUserCredentials(user, password);
+      await saveUserCredentials(user, password);
 
       log("Création du compte et initialisation réussie pour l'utilisateur avec UID : $userId");
 
@@ -101,7 +101,7 @@ class AuthService {
   }
 
   // Sauvegarde des identifiants utilisateur dans le cache local
-  Future<void> _saveUserCredentials(User user, String password) async {
+  Future<void> saveUserCredentials(User user, String password) async {
     await _secureStorage.write(key: 'userEmail', value: user.email);
     log("auth_service.dart : _saveUserCredentials : userEmail saved : ${user.email}");
     await _secureStorage.write(key: 'userPassword', value: password);  // Utiliser une variable sécurisée
