@@ -25,8 +25,6 @@ class SettingsViewState extends State<SettingsView> {
     _loadSettings();
   }
 
-  //todo afficher un message en haut de l'écran a chaque fois que unne données est enregistrée automatiquement notamment les reminder et activation ou non des notifciation qu'il m'indique que ce qu'il vien d'être fait enfaite
-
   Future<void> _loadSettings() async {
     final user = serviceLocator<FirebaseAuth>().currentUser;
     if (user != null) {
@@ -202,37 +200,25 @@ class SettingsViewState extends State<SettingsView> {
     );
   }
 
+
   Future<void> _changeEmail(String newEmail) async {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      if (user.emailVerified) {
-        // Si l'email est vérifié, permettre le changement de l'email
-        try {
-          await user.updateEmail(newEmail);
-          await serviceLocator<AuthService>().saveUserCredentials(user, ''); // Gardez le mot de passe inchangé
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Email mis à jour avec succès')),
-          );
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur lors de la mise à jour de l\'email : $e')),
-          );
-          log("Erreur lors de la mise à jour de l'email : $e");
-        }
-      } else {
-        // Si l'email n'est pas vérifié, envoyer un email de vérification
-        try {
-          await user.sendEmailVerification();  // Vous pouvez personnaliser en utilisant ActionCodeSettings si nécessaire
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Un email de vérification a été envoyé. Veuillez vérifier votre adresse avant de la modifier.')),
-          );
-        } catch (e) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur lors de l\'envoi de l\'email de vérification : $e')),
-          );
-          log("Erreur lors de l'envoi de l'email de vérification : $e");
-        }
+      try {
+        await user.updateEmail(newEmail);
+        setState(() {
+          _userEmail = newEmail;
+        });
+        await serviceLocator<AuthService>().saveUserCredentials(user, ''); // Gardez le mot de passe inchangé
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email mis à jour avec succès')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors de la mise à jour de l\'email : $e')),
+        );
+        log("Erreur lors de la mise à jour de l'email : $e");
       }
     }
   }
