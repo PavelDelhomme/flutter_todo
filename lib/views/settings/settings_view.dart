@@ -31,15 +31,10 @@ class SettingsViewState extends State<SettingsView> {
     if (user != null) {
       _userEmail = user.email ?? '';
 
-      //DocumentSnapshot doc = await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).get();
       DocumentSnapshot doc = await serviceLocator<FirebaseFirestore>().collection('userSettings').doc(user.uid).get();
 
       // Si les settings n'existent pas encore, les créer
       if (!doc.exists) {
-        /*await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).set({
-          'reminderEnabled': true,
-          'reminderTime': 10,
-        });*/
         await serviceLocator<FirebaseFirestore>().collection('userSettings').doc(user.uid).set({
           'reminderEnabled': true,
           'reminderTime': 10,
@@ -59,20 +54,13 @@ class SettingsViewState extends State<SettingsView> {
 
   Future<void> _updateReminderSettings(bool reminderEnabled, int reminderTime) async {
     final user = serviceLocator<FirebaseAuth>().currentUser;
-    //final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
-        /*await FirebaseFirestore.instance.collection('userSettings').doc(user.uid).set({
-          'reminderEnabled': reminderEnabled,
-          'reminderTime': reminderTime,
-        }, SetOptions(merge: true));
-         */
         await serviceLocator<FirebaseFirestore>().collection('userSettings').doc(user.uid).set({
           'reminderEnabled': reminderEnabled,
           'reminderTime': reminderTime,
         }, SetOptions(merge: true));
 
-        //await notificationService.updateNotificationsForUser(user.uid);
         await serviceLocator<NotificationService>().updateNotificationsForUser(user.uid);
         log("Reminder settings updated : reminderEnabled : $reminderEnabled, reminderTime : $reminderTime");
       } catch (e) {

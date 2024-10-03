@@ -60,7 +60,7 @@ class NotificationService {
   }
 
 
-  Future<Map<String, dynamic>> _getUserNotificationSettings(String userId) async {
+  Future<Map<String, dynamic>> getUserNotificationSettings(String userId) async {
     final doc = await FirebaseFirestore.instance.collection("userSettings").doc(userId).get();
     if (doc.exists) {
       return doc.data()!;
@@ -128,7 +128,7 @@ class NotificationService {
 
   // Mise à jour des notifications pour un utilisateur
   Future<void> updateNotificationsForUser(String userId) async {
-    final userSettings = await _getUserNotificationSettings(userId);
+    final userSettings = await getUserNotificationSettings(userId);
 
     final taskSnapshot = await FirebaseFirestore.instance.collection('tasks').where('userId', isEqualTo: userId).get();
     List<Task> tasks = taskSnapshot.docs.map((doc) => Task.fromMap(doc.data())).toList();

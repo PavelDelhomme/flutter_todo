@@ -7,11 +7,6 @@ import '../models/user.dart';
 
 
 class AuthService {
-  // Anciens fonctionnement des services
-  //final FirebaseAuth _auth = FirebaseAuth.instance;
-  //final FirebaseFirestore _db = FirebaseFirestore.instance;
-  //final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
-
   // Service centralisés
   final FirebaseAuth _auth = serviceLocator<FirebaseAuth>();
   final FirebaseFirestore _db = serviceLocator<FirebaseFirestore>();

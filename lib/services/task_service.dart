@@ -10,41 +10,41 @@ class TaskService {
 
   Future<void> addTask(Task task) async {
     // Récupérer l'utilisateur actuel
-    //final User? user = FirebaseAuth.instance.currentUser;
     final User? user = serviceLocator<FirebaseAuth>().currentUser;
 
-    if (user == null) {
-      log("task_service : Erreur: l'utilisateur n'est pas authentifié.");
-      throw FirebaseAuthException(
-        code: "USER_NOT_AUTHENTICATED",
-        message: "L'utilisateur n'est pas authentifié."
-      );
-    }
+    _checkUserAuthenticated(user);
     // Assigner l'UID de l'utilisateur à la tâche
-    task.userId = user.uid;
+    task.userId = user!.uid;
     // Enregistrement de la tâche dans Firestore
     await taskCollection.doc(task.id).set(task.toMap());
-    // Mise a jour des notifications pour la nouvelle tâche
-    //await notificationService.updateNotificationsForUser(user.uid);
-    await serviceLocator<NotificationService>().updateNotificationsForUser(user.uid);
+
+    // Programmation des notifications lors de la création de la tâche
+    await serviceLocator<NotificationService>().scheduleFutureNotifications(
+        [task], await serviceLocator<NotificationService>().getUserNotificationSettings(user.uid)
+    );
     log("Tâche ajoutée et notifications mise à jour.");
   }
 
   Future<void> updateTask(Task task) async {
-    //final User? user = FirebaseAuth.instance.currentUser;
     final User? user = serviceLocator<FirebaseAuth>().currentUser;
+
+    _checkUserAuthenticated(user);
+
+    // Annulation des anciennes notifications
+    await serviceLocator<NotificationService>().cancelTaskNotifications(task);
+
+    // Mise à jour de la tâche
     await taskCollection.doc(task.id).update(task.toMap());
-    // Mise à jours des notifications
-    //await notificationService.updateNotificationsForUser(user!.uid);
-    if (user != null) {
-      await serviceLocator<NotificationService>().updateNotificationsForUser(user.uid);
-    }
+
+    // Programmation des nouvelles notifications
+    await serviceLocator<NotificationService>().scheduleFutureNotifications(
+      [task], await serviceLocator<NotificationService>().getUserNotificationSettings(user!.uid)
+    );
+
     log("Task updated and notifications rescheduled.");
   }
 
   Future<void> deleteTask(String id) async {
-    //await notificationService.cancelNotification(id.hashCode); // Cancel start notification
-    //await notificationService.cancelNotification(id.hashCode + 1); // Cancel reminder notification
     await serviceLocator<NotificationService>().cancelNotification(id.hashCode);
     await serviceLocator<NotificationService>().cancelNotification(id.hashCode + 1);
     await taskCollection.doc(id).delete();
@@ -55,8 +55,6 @@ class TaskService {
     await taskCollection.doc(id).update({"isCompleted": true});
     await serviceLocator<NotificationService>().cancelNotification(id.hashCode);
     await serviceLocator<NotificationService>().cancelNotification(id.hashCode + 1);
-    //await notificationService.cancelNotification(id.hashCode);
-    //await notificationService.cancelNotification(id.hashCode + 1);
     log("Task marked as completed and notifications canceled");
   }
 
@@ -111,6 +109,16 @@ class TaskService {
 
       await taskCollection.doc(dummyTask.id).set(dummyTask.toMap());
       log("Tâche ficitve ajoutée pour l'utilisateur $userId, aucune tâche fictive ajoutée.");
+    }
+  }
+
+  Future<void> _checkUserAuthenticated(User? user) async {
+    if (user == null) {
+      log("task_service : Erreur: l'utilisateur n'est pas authentifié.");
+      throw FirebaseAuthException(
+          code: "USER_NOT_AUTHENTICATED",
+          message: "L'utilisateur n'est pas authentifié."
+      );
     }
   }
 }
