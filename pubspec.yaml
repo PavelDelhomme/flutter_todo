@@ -44,8 +44,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-  assets:
-    - assets/icons/bell_notification.webp
 
 flutter_secure_storage:
   androidOptions:

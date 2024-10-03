@@ -84,11 +84,15 @@ class NotificationService {
 
     await _flutterLocalNotificationsPlugin.zonedSchedule(
       id,
-      title,
-      body,
+      title ?? "Titre par défaut",
+      body ?? "Contenu par défaut",
       scheduledTZDateTime,
       const NotificationDetails(
-        android: AndroidNotificationDetails('task_channel', 'Task Notifications'),
+        android: AndroidNotificationDetails(
+            'task_channel',
+            'Task Notifications',
+          icon: '@mipmap/ic_launcher',
+        ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
