@@ -36,8 +36,11 @@ class InscriptionViewState extends State<InscriptionView> {
         // Attendre quelques secondes pour garantir la création des documents Firestore
         await Future.delayed(const Duration(seconds: 2));
 
+
         // Création d'une tâche ficitve pour le nouvel utilisateur
         final user = FirebaseAuth.instance.currentUser;
+        log("inscription_view : currentUser : $user");
+
         if (user != null) {
           await serviceLocator<TaskService>().createDummyTaskForNewUser(user.uid);
         }

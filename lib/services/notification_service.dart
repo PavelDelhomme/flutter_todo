@@ -126,6 +126,9 @@ class NotificationService {
             reminderTime: reminderTime,
           );
         }
+
+        //todo programmationon notification en retard après vérification de l'etat de tâche
+
       }
     }
   }

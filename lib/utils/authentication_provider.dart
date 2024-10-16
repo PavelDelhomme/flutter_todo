@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
@@ -19,8 +21,9 @@ class AuthenticationProvider extends ChangeNotifier {
   Future<void> signUp({required String email, required String password}) async {
     try {
       await firebaseAuth.createUserWithEmailAndPassword(email: email, password: password);
+      log("authentication_provider : ${firebaseAuth.currentUser}");
     } on FirebaseAuthException catch (e) {
-      debugPrint("Erreur d'inscription : ${e.message}");
+      log("Erreur d'inscription : ${e.message}");
     }
   }
 
